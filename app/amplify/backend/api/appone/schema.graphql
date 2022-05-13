@@ -1,0 +1,54 @@
+type SubPeriod @model @auth(rules: [{allow: owner}]){
+  id:ID!
+  Range: String
+  MovementCount: Int
+}
+
+type DeviceState @model @auth(rules: [{allow: owner}]){
+  id:ID!
+  Time: String!
+  State: String!
+}
+
+type TrackerPeriod @model @auth(rules: [{allow: owner}]){
+  id: ID!
+  userId: String!
+  WakeUpTime: String!
+  SleepTime: String!
+  ended: String
+  AverageMovementCount: String
+  SleepDuration: String
+  DurationInNumbers: String
+  DisturbancesCount: String
+  SubPeriods:[SubPeriod] @hasMany
+  DeviceStates: [DeviceState] @hasMany
+  TotalMovements: Int
+  AccelerometerLastReading: Float
+}
+
+type SurveyEntry @model @auth(rules: [{allow: owner}]){
+  id: ID!
+  date: AWSDateTime!
+  survey1: AWSJSON!
+  survey2: AWSJSON!
+  survey3: AWSJSON!
+}
+
+type DayGroup {
+  SleepTime: String!
+  WakeUpTime: String!
+  Days: [String]!
+}
+
+type User @model @auth(rules: [{allow: owner}]){
+  id: ID!
+  sid: String!
+  consent: String
+  offDay: DayGroup!
+  workday: DayGroup!
+  surveyLastUpdate: AWSDateTime
+  surveyLastUpdate2: AWSDateTime
+  surveys: [SurveyEntry] @hasMany
+  tracker: [TrackerPeriod] @hasMany
+}
+ 

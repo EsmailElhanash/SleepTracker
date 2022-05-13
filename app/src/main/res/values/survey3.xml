@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="survey3_title">
+        From 0 to 7 , Describe: (0: Normal, 7: Very bad)
+    </string>
+
+    <string-array name="survey3_questions">
+        <item>Depression</item>
+        <item>Anxiety</item>
+        <item>Insomnia</item>
+    </string-array>
+
+</resources>

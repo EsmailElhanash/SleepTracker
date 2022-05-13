@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.sleeptracker">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <uses-feature
+        android:name="android.hardware.sensor.accelerometer"
+        android:required="true" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SleepTracker"
+        tools:ignore="AllowBackup">
+
+        <service
+            android:name="com.example.userdataapp.App2Service" />
+
+        <activity
+            android:name=".ui.ConsentActivity"
+            android:exported="true" />
+
+        <service
+            android:name=".background.androidservices.SurveyService"
+            android:permission="android.permission.FOREGROUND_SERVICE" />
+        <service
+            android:name=".background.androidservices.AlarmService"
+            android:permission="android.permission.FOREGROUND_SERVICE" />
+        <service
+            android:name=".background.androidservices.TrackerService"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.FOREGROUND_SERVICE" />
+
+        <activity android:name=".ui.SettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.sleeptracker.ui.HomeActivity" />
+        </activity>
+        <activity android:name=".ui.HomeActivity" />
+        <activity android:name=".ui.signin.LoginActivity" />
+        <activity android:name=".ui.survey.SurveyActivity" />
+        <activity android:name=".ui.statistics.StatisticsActivity" />
+        <activity android:name=".ui.signin.SignUpActivity" />
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <receiver
+            android:name=".background.receivers.AlarmReceiver"
+            android:enabled="true" />
+        <receiver
+            android:name=".background.receivers.NotificationReceiver"
+            android:enabled="true" />
+        <receiver
+            android:name=".background.receivers.StateReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SCREEN_ON" />
+                <action android:name="android.intent.action.SCREEN_OFF" />
+                <action android:name="android.intent.action.USER_PRESENT" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".background.receivers.ResetReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.ACTION_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.ACTION_LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.ACTION_TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.ACTION_TIME_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

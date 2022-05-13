@@ -1,0 +1,96 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
+}
+apply plugin: 'kotlin-android'
+
+android {
+    compileSdk 32
+    buildToolsVersion "32.1.0-rc1"
+
+    signingConfigs {
+        release {
+            storeFile file('/home/esmail/AndroidProjects/SleepTracker/release-ks.jks')
+            keyAlias 'key0'
+            storePassword 'REDACTED_PASSWORD'
+            keyPassword 'REDACTED_PASSWORD'
+        }
+    }
+
+    defaultConfig {
+        applicationId "com.example.sleeptracker"
+        minSdk 16
+        targetSdk 32
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        signingConfig signingConfigs.release
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+//            shrinkResources true
+            proguardFile getDefaultProguardFile('proguard-android-optimize.txt')
+            proguardFile 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+}
+dependencies {
+
+    implementation 'com.amplifyframework:aws-datastore:1.35.3'
+
+    implementation 'com.amplifyframework:core:1.35.3'
+    implementation project(path: ':app2')
+
+    // Support for Java 8 features
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
+
+    implementation 'com.amplifyframework:aws-auth-cognito:1.35.3'
+    implementation 'com.amplifyframework:aws-api:1.35.3'
+
+    implementation 'androidx.core:core-ktx:1.7.0'
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'com.google.android.material:material:1.6.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    testImplementation 'com.google.truth:truth:1.1.3'
+    implementation "com.google.android.material:material:1.6.0"
+//    implementation 'com.google.firebase:firebase-auth-ktx'
+    implementation 'com.google.firebase:firebase-database-ktx'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2-native-mt'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2-native-mt'
+    annotationProcessor 'com.google.auto.value:auto-value:1.8.2'
+    annotationProcessor 'com.ryanharter.auto.value:auto-value-parcel:0.2.9'
+    compileOnly 'com.jakewharton.auto.value:auto-value-annotations:1.5'
+    implementation 'androidx.activity:activity-ktx:1.4.0'
+    implementation "androidx.core:core-ktx:1.7.0"
+    implementation 'androidx.fragment:fragment-ktx:1.4.1'
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    implementation platform('com.google.firebase:firebase-bom:28.1.0')
+    implementation 'com.google.firebase:firebase-crashlytics-ktx'
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+    implementation "androidx.core:core-ktx:1.7.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21"
+}

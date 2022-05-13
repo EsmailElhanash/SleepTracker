@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/primaryDark"
+
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:text="@string/work_days" />
+
+    <Button
+        android:id="@+id/addWorkDaySleepTime"
+        style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:padding="16dp"
+        android:text="@string/workday_sleep_time"
+        android:textColor="@color/white"
+        app:backgroundTint="@color/primaryDark"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:icon="@drawable/ic_baseline_add_circle_24"
+        app:iconGravity="textStart"
+        android:onClick="showTimePickerDialog"
+        app:iconSize="18dp"
+        app:iconPadding="8dp"
+        app:iconTint="@color/white"/>
+    <Button
+        android:id="@+id/addWorkDayWakeTime"
+        style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:padding="16dp"
+        android:text="@string/workday_awake_time"
+        android:textColor="@color/white"
+        app:backgroundTint="@color/primaryDark"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:icon="@drawable/ic_baseline_add_circle_24"
+        app:iconGravity="textStart"
+        app:iconSize="18dp"
+        app:iconPadding="8dp"
+        android:onClick="showTimePickerDialog"
+        app:iconTint="@color/white"/>
+
+    <View android:layout_width="match_parent"
+        android:layout_height="15dp"/>
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/primaryLight"
+
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:text="@string/off_days" />
+    <Button
+        android:id="@+id/addOffDaySleepTime"
+        style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:padding="16dp"
+        android:text="@string/off_day_sleep_time"
+        android:textColor="@color/white"
+        app:backgroundTint="@color/primaryLight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:icon="@drawable/ic_baseline_add_circle_24"
+        app:iconGravity="textStart"
+        android:onClick="showTimePickerDialog"
+        app:iconSize="18dp"
+        app:iconPadding="8dp"
+        app:iconTint="@color/white"/>
+    <Button
+        android:id="@+id/addOffDayWakeTime"
+        style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:padding="16dp"
+        android:text="@string/off_day_awake_time"
+        android:textColor="@color/white"
+        app:backgroundTint="@color/primaryLight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:icon="@drawable/ic_baseline_add_circle_24"
+        app:iconGravity="textStart"
+        app:iconSize="18dp"
+        app:iconPadding="8dp"
+        android:onClick="showTimePickerDialog"
+        app:iconTint="@color/white"/>
+</LinearLayout>

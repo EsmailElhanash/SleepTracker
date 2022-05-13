@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <LinearLayout xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        tools:context=".ui.signin.SignUpActivity">
+
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/primary"
+            app:title="@string/app_name"
+            app:subtitle="@string/login"
+            app:titleTextColor="@color/white"
+            app:subtitleTextColor="@color/white"/>
+
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:hint="@string/email_address"
+            android:inputType="textEmailAddress"
+            android:id="@+id/email_input_login"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:autofillHints="" >
+            <com.google.android.material.textfield.TextInputEditText
+                android:maxLines="1"
+                android:layout_width="match_parent"
+                android:background="@drawable/edit_text_shape"
+                android:layout_height="match_parent"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            app:endIconMode="password_toggle"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:hint="@string/new_password"
+            android:inputType="textPassword"
+            android:id="@+id/password_input_login"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:autofillHints="" >
+            <com.google.android.material.textfield.TextInputEditText
+                android:layout_width="match_parent"
+                android:maxLines="1"
+                android:background="@drawable/edit_text_shape"
+                android:layout_height="match_parent"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+        <Button
+            android:id="@+id/login_button"
+            style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:padding="16dp"
+            android:text="@string/login"
+            android:textColor="@color/white"
+            app:backgroundTint="@color/primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:icon="@drawable/ic_baseline_login_24"
+            app:iconGravity="textStart"
+            app:iconSize="18dp"
+            app:iconPadding="8dp"
+            app:iconTint="@color/white"/>
+
+        <TextView
+            android:layout_gravity="center"
+            android:textColor="@color/primary"
+            android:id="@+id/sign_up_instead"
+            android:text="@string/sign_up_instead"
+            android:padding="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+</ScrollView>
