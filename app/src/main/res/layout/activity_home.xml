@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        tools:context=".ui.HomeActivity"
+        android:layout_height="wrap_content">
+
+
+        <LinearLayout
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:id="@+id/upper">
+
+            <androidx.appcompat.widget.Toolbar
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                app:logo="@drawable/logo2"
+                android:background="@color/primary"
+                app:title=" "
+                android:id="@+id/toolBarHomeActivity"/>
+
+            <TextView
+                android:textColor="@color/primary"
+                android:layout_gravity="center"
+                android:layout_margin="8dp"
+                android:textSize="27sp"
+                android:text="@string/current_sleeping_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+
+                <include layout="@layout/sleep_wake_times_view" android:id="@+id/sleep_wake_times_view"/>
+<!--            <TextView-->
+<!--                android:layout_gravity="center"-->
+<!--                android:layout_margin="8dp"-->
+<!--                android:textSize="20sp"-->
+<!--                android:textColor="@color/black"-->
+<!--                android:id="@+id/workday_sleep_time_text"-->
+<!--                android:text="@string/sleep_time_bold"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"/>-->
+
+<!--            <TextView-->
+<!--                android:layout_gravity="center"-->
+<!--                android:layout_margin="8dp"-->
+<!--                android:id="@+id/work_day_wake_time_text"-->
+<!--                android:textSize="20sp"-->
+<!--                android:textColor="@color/black"-->
+<!--                android:text="@string/wake_time_bold"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"/>-->
+
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="30dp"/>
+
+
+        </LinearLayout>
+        <LinearLayout
+            android:layout_marginTop="50dp"
+            app:layout_constraintTop_toBottomOf="@id/upper"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:id="@+id/lower"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <Button
+                android:id="@+id/daily_statistics_nav_button"
+                style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:padding="16dp"
+                android:layout_gravity="bottom"
+                android:text="@string/daily_statistics"
+                android:textColor="@color/white"
+                app:backgroundTint="@color/primary"
+                app:icon="@drawable/ic_baseline_statistics_24"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:iconGravity="textStart"
+                app:iconSize="18dp"
+                app:iconPadding="8dp"
+                app:iconTint="@color/white"/>
+
+            <Button
+                android:visibility="gone"
+                android:id="@+id/weekly_statistics_nav_button"
+                style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:padding="16dp"
+                android:text="@string/weekly_statistics"
+                android:textColor="@color/white"
+                app:backgroundTint="@color/primary"
+                app:icon="@drawable/ic_baseline_statistics_24"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:iconGravity="textStart"
+                app:iconSize="18dp"
+                app:iconPadding="8dp"
+                app:iconTint="@color/white"/>
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</ScrollView>

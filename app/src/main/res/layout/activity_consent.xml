@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:context=".ui.ConsentActivity"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:logo="@drawable/logo2"
+            android:background="@color/primary"
+            app:title="Terms and Conditions"
+            app:titleTextColor="@color/white"
+            android:id="@+id/toolBarHomeActivity"/>
+
+        <TextView
+            android:layout_margin="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:text="@string/consent"
+            />
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_marginBottom="10dp"
+            android:layout_height="wrap_content">
+            <Button
+                android:id="@+id/accept_consent"
+                android:layout_marginHorizontal="10dp"
+                android:textColor="@color/light_gray"
+                android:layout_weight="1"
+                android:text="@string/accept_consent"
+                style="?attr/materialButtonOutlinedStyle"
+                app:strokeColor="@color/light_gray"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <Button
+                android:id="@+id/decline_consent"
+                android:layout_marginHorizontal="10dp"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_weight="1"
+                android:textColor="@color/light_gray"
+                app:strokeColor="@color/light_gray"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:text="@string/decline_consent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

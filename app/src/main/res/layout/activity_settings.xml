@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <LinearLayout xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        tools:context=".ui.HomeActivity">
+
+
+
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/primary"
+            android:id="@+id/toolBarSettingsActivity"
+            app:title="@string/app_name"
+            app:subtitle="@string/settings"
+            app:titleTextColor="@color/white"
+            app:subtitleTextColor="@color/white"/>
+
+
+        <Button
+            android:id="@+id/change_password_button"
+            style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+            android:padding="16dp"
+            android:text="@string/change_password"
+            android:textColor="@color/gray"
+            app:backgroundTint="@color/white"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            app:icon="@drawable/ic_baseline_lock_24"
+            app:iconGravity="start"
+            app:iconSize="24dp"
+            android:textSize="16sp"
+            app:iconTint="@color/gray"
+            android:gravity="center" />
+
+        <View android:layout_width="match_parent"
+            android:background="@android:color/darker_gray"
+            android:layout_height="1dp"/>
+        <Button
+            android:id="@+id/logout_button"
+            style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+            android:padding="16dp"
+            android:text="@string/logout"
+            android:textColor="@color/gray"
+            app:backgroundTint="@color/white"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            app:icon="@drawable/ic_baseline_login_24"
+            app:iconGravity="start"
+            app:iconSize="24dp"
+            android:textSize="16sp"
+            app:iconTint="@color/gray"
+            android:gravity="center" />
+
+        <View android:layout_width="match_parent"
+            android:background="@android:color/darker_gray"
+            android:layout_height="1dp"/>
+        <Button
+            android:id="@+id/editWorkDays"
+            style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+            android:padding="16dp"
+            android:text="@string/editWorkDays"
+            android:textColor="@color/gray"
+            app:backgroundTint="@color/white"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            app:icon="@drawable/ic_baseline_login_24"
+            app:iconGravity="start"
+            app:iconSize="24dp"
+            android:textSize="16sp"
+            app:iconTint="@color/gray"
+            android:gravity="center" />
+
+        <View android:layout_width="match_parent"
+            android:background="@android:color/darker_gray"
+            android:layout_height="1dp"/>
+
+
+        <View android:layout_width="match_parent"
+            android:layout_height="10dp"/>
+
+
+        <include layout="@layout/sleep_wake_times_view" android:id="@+id/sleep_wake_times_view"/>
+
+
+        <View android:layout_width="match_parent"
+            android:background="@android:color/darker_gray"
+            android:layout_height="1dp"/>
+
+        <View android:layout_width="match_parent"
+            android:layout_height="10dp"/>
+        <include layout="@layout/times_pick_layout" android:id="@+id/times_pick_layout"/>
+
+
+
+        <View android:layout_width="match_parent"
+            android:layout_height="10dp"/>
+        <Button
+            android:id="@+id/update_time_button"
+            style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:padding="16dp"
+            android:text="@string/update"
+            android:textColor="@color/white"
+            app:backgroundTint="@color/primary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:iconGravity="textStart"
+            app:iconSize="18dp"
+            app:iconPadding="8dp"
+            app:iconTint="@color/white"/>
+
+    </LinearLayout>
+</ScrollView>

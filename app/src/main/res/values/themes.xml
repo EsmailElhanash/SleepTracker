@@ -1,0 +1,20 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.SleepTracker" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- Primary brand color. -->
+
+        <item name="colorPrimary">@color/primary</item>
+        <!--<item name="colorPrimaryVariant">@color/purple_700</item>-->
+        <item name="colorOnPrimary">@color/primary</item>
+        <item name="colorAccent">#E91E63</item>
+        <!-- Secondary brand color. -->
+        <!--<item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>-->
+        <item name="colorOnSecondary">@android:color/darker_gray</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+        <!-- Customize your theme here. -->
+        <item name="android:editTextBackground">@drawable/edit_text_shape</item>
+
+    </style>
+</resources>

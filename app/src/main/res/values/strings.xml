@@ -1,0 +1,134 @@
+<resources>
+    <string name="app_name">Sleep Tracker</string>
+    <string name="signUpPageTitle">Create New Account</string>
+    <string name="name">Name</string>
+    <string name="email_address">Email Address</string>
+    <string name="new_password">New Password</string>
+    <string name="confirm_new_password">Confirm New Password</string>
+    <string name="gender">Gender</string>
+    <string name="date_of_birth">Date of Birth</string>
+    <string name="workday_sleep_time">work-day earliest sleep time</string>
+    <string name="workday_awake_time">work-day latest wake up time</string>
+
+    <string name="off_day_sleep_time">off-day earliest sleep time</string>
+    <string name="off_day_awake_time">off-day latest wake up time</string>
+    <string name="accept_our_terms_and_conditions">Accept our terms and conditions</string>
+    <string name="sign_up">Sign up</string>
+    <string name="age">Age</string>
+    <string name="invalid_entered_name">Invalid entered name</string>
+    <string name="specify_sleep_awake_time">Please specify your sleep and wake up times</string>
+    <string name="invalid_entered_email">Invalid entered email</string>
+    <string name="invalid_entered_password">Invalid password</string>
+    <string name="password_not_match">Password doesn\'t match</string>
+    <string name="invalid_age">Invalid age</string>
+    <string name="please_accept">Please accept terms and conditions</string>
+    <string name="please_choose_ethnic_group">Please choose ethnic group</string>
+    <string name="choose_gender">please choose gender</string>
+    <string name="choose_answer">choose answer</string>
+    <string name="creating_your_account">Creating your account</string>
+    <string name="submit_form">Submit Form</string>
+    <string name="login">Login</string>
+    <string name="sign_up_instead"><u>Sign Up instead?</u></string>
+    <string name="incorrect_data">Email or password is incorrect</string>
+    <string name="error_occurred">Error Occurred</string>
+    <string name="update_sleeping_hours">Update Sleeping Hours</string>
+    <string name="update_time">Update Time</string>
+    <string name="current_sleeping_time">Current Sleeping Time</string>
+    <string-array name="gender_entries">
+        <item>Gender</item>
+        <item>Male</item>
+        <item>Female</item>
+    </string-array>
+
+
+    <string name="wake_time_bold"><b>Wake up Time : </b></string>
+    <string name="sleep_time_bold"><b>Sleep Time : </b></string>
+    <string name="settings">Settings</string>
+    <string name="change_password">Change Password</string>
+    <string name="logout">Logout</string>
+    <string name="update">Update</string>
+    <string name="Password_successfully_changed">Password successfully changed</string>
+    <string name="app_is_active">Sleep tracker is active</string>
+    <string name="updating_data">Updating data</string>
+    <string name="next">Next</string>
+    <string name="retake_the_survey">Please retake the survey !</string>
+    <string name="daily_statistics">Daily Statistics</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="weekly_statistics">Weekly Statistics</string>
+    <string name="double_tab_drag_to_scroll">Note:Double Tab + Drag to scroll</string>
+    <string name="what_is_the_earliest_time_you_go_to_bed">What is the earliest time you go to bed?</string>
+    <string name="what_is_the_time_you_usually_wake_up_in">What is the time you usually wake up in?</string>
+    <string name="BatteryOptimizationDisableRequest">Sleep Tracking service needs to skip battery optimizations, in order to work properly, please allow the following request.</string>
+    <string name="confirmOverwritePeriodData">There is currently an active sleep period, if you change sleep timePoint now, all data for this period will be discarded.<br />\n are you sure?</string>
+    <string name="Updating_Time">Updating Time..</string>
+    <string name="incomplete_answers">Please complete survey answers</string>
+    <string name="checking_time">Checking Sleep Period Time</string>
+    <string name="in_workdays">in work-days:</string>
+    <string name="in_off_days">in off-days:</string>
+    <string name="work_days">work-days</string>
+    <string name="off_days">off-days</string>
+    <string name="day0">Saturday</string>
+    <string name="day1">Sunday</string>
+    <string name="day3">Monday</string>
+    <string name="day4">Tuesday</string>
+    <string name="day6">Thursday</string>
+    <string name="day5">Wednesday</string>
+    <string name="day7">Friday</string>
+    <string name="choose_your_workdays">Choose what is your working days:</string>
+    <string name="thanks_for_participating_text">Thank you for particpating in our study using Sleep Tracker app, if you think you have anxiety or depression, please visit students, health GP</string>
+    <string name="editWorkDays">Edit Work Days</string>
+    <string name="checking_survey">Checking survey date</string>
+    <string name="white">White</string>
+    <string name="white_ethnic_hint">(including any white ethnic group)</string>
+
+
+    <string name="mixed">mixed / multiple ethnic</string>
+    <string name="mixed_ethnic_hint">(including any mixed / multiple ethnic group)</string>
+
+    <string name="asian">Asian / Asian british / asian scottish ethnic</string>
+    <string name="asian_ethnic_hint">(including any pakistani, indian, bangladeshi, chinese, or any asian ethnic group)</string>
+
+    <string name="caribbean">Caribbean or black</string>
+    <string name="caribbean_ethnic_hint">(including caribbean, black , or any other caribbean or black ethnic group)</string>
+
+    <string name="african">African</string>
+    <string name="african_ethnic_hint">(including african, african scottish, african british , or any other african ethnic group)</string>
+
+    <string name="other_ethnic">Other ethnic group</string>
+    <string name="other_ethnic_hint">(for example arab, arab scottish, arab english, or any other ethnic group)</string>
+
+    <string name="what_is_your_ethnic_groups">What is your ethnic groups?</string>
+
+    <string name="consent">
+
+        <b>Do you confirm that you:</b> <br />\n
+• Are between the ages of 18 and 25 years old<br />\n
+• Use an Android smartphone<br />\n
+• Have no history of, or receiving treatment for, anxiety or depression<br />\n
+<b>I understand that in this study I will be asked to:</b><br />\n
+• Install the Sleep-Tracker app onto my smartphone<br />\n
+• Allow the Sleep-Tracker app to run in the background of my phone for the duration
+of this
+study (8 weeks)<br />\n
+• Complete questionnaires regarding sleep and mood at different time-points in the study
+period<br />\n
+• Complete a short survey at the end of the study period<br />\n
+• Participate in a short interview, if invited<br />\n
+<b>Have you:</b><br />\n
+• Been given information explaining the study?<br />\n
+• Had an opportunity to ask questions and discuss the study?<br />\n
+• Received satisfactory answers to all questions you asked?<br />\n
+• Received enough information about the study for you to make a decision about your
+participation?<br />\n
+<b>Do you understand</b><br />\n
+That you are free to withdraw from the study and free to withdraw your data prior to
+finishing the study <br />\n
+• At any time<br />\n
+• Without giving a reason for withdrawing
+
+    </string>
+    <string name="accept_consent">Accept</string>
+    <string name="decline_consent">Decline</string>
+    <string name="loading">Loading</string>
+    <string name="old_password">Old Password</string>
+</resources>

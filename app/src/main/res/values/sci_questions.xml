@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sci_questions_1_title">
+        Thinking about a typical night in the last month…
+    </string>
+    <string-array name="sci_questions_1">
+        <item>how long does it take you to fall asleep?</item>
+        <item>if you then wake up during the night, how long are you awake for in total? (add all the wakenings up)</item>
+        <item>how many nights a week do you have a problem with your sleep?</item>
+        <item>how would you rate your sleep quality?</item>
+    </string-array>
+
+    <string name="sci_questions_2_title">
+        Thinking about the past month, to what extent has poor sleep..
+    </string>
+    <string-array name="sci_questions_2">
+        <item>affected your mood, energy, or relationships?</item>
+        <item>affected your concentration, productivity, or ability to stay awake?</item>
+        <item>troubled you in general?</item>
+    </string-array>
+
+    <string-array name="sci_questions_3">
+        <item>how long have you had a problem with your sleep?</item>
+    </string-array>
+    <string name="sci_questions_3_title">Finally…
+    </string>
+</resources>

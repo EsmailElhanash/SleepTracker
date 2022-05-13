@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="gad7_title">
+        Over the last 2 weeks, on how many days have
+        you been bothered by any of the following
+        problems?
+    </string>
+    <string-array name="gad7_questions">
+        <item>Feeling nervous, anxious or on edge</item>
+        <item>Not being able to stop or control worrying</item>
+        <item>Worrying too much about different things</item>
+        <item>Trouble relaxing</item>
+        <item>Being so restless it is hard to sit still</item>
+        <item>Becoming easily annoyed or irritable</item>
+        <item>Feeling afraid as if something awful might happen</item>
+    </string-array>
+</resources>

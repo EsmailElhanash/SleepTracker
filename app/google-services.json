@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "401244862327",
+    "firebase_url": "https://mobilesensors-9da0d-default-rtdb.firebaseio.com",
+    "project_id": "mobilesensors-9da0d",
+    "storage_bucket": "mobilesensors-9da0d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:401244862327:android:fcbd654ff7d55e33a35372",
+        "android_client_info": {
+          "package_name": "com.example.sleeptracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "401244862327-iivc53kal77if4vdrmligiagqjltpido.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-LEdsFVQINfAq2K2lvWPG5SpI0JWBQv4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "401244862327-iivc53kal77if4vdrmligiagqjltpido.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

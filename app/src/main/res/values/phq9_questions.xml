@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="phq9_title">
+        Over the last 2 weeks, on how many days have
+        you been bothered by any of the following
+        problems?
+    </string>
+    <string-array name="phq9_questions">
+        <item>Little interest or pleasure in doing things</item>
+        <item>Feeling down, depressed or hopeless</item>
+        <item>Trouble falling or staying asleep, or sleeping too much</item>
+        <item>Feeling tired or having little energy</item>
+        <item>Poor appetite or over eating</item>
+        <item>Feeling bad about yourself – or that you are a failure or have let yourself or your family down</item>
+        <item>Trouble concentrating on things, such as reading the newspaper or watching television</item>
+        <item>Moving or speaking so slowly that other people could have noticed, or the opposite – being so fidgety or restless that you have been moving around a lot more than usual</item>
+        <item>Thoughts that you would be better off dead or of hurting yourself in some way</item>
+    </string-array>
+</resources>
