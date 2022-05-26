@@ -7,20 +7,24 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.amplifyframework.core.Amplify
-import com.example.sleeptracker.database.DBAccessPoint
-import com.example.sleeptracker.database.utils.DBParameters
+import com.amplifyframework.core.model.temporal.Temporal
+import com.amplifyframework.datastore.generated.model.Survey2Last
+import com.amplifyframework.datastore.generated.model.SurveyUpdateLastCase2
+import com.amplifyframework.datastore.generated.model.User
+import com.example.sleeptracker.aws.DB
+import com.example.sleeptracker.aws.DB.uid
 import com.example.sleeptracker.ui.survey.SurveyActivity
 import com.example.sleeptracker.utils.androidutils.NotificationType
 import com.example.sleeptracker.utils.androidutils.NotificationsManager
-import com.example.sleeptracker.utils.time.TimeUtil
-import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 import java.util.*
 
 class NotificationReceiver : BroadcastReceiver() {
+
     override fun onReceive(context: Context?, intent: Intent?) {
         context?:return
         val id = 13132
@@ -44,29 +48,28 @@ class NotificationReceiver : BroadcastReceiver() {
                     n?.build()?.let { cancel(id) }
                 }
              }
-            val uid = Amplify.Auth.currentUser?.userId ?: return
-             DBAccessPoint.getUserSurveyLastConditionTwo(uid).setValue(
-                 Calendar.getInstance().timeInMillis
-             )
-            DBAccessPoint.getUserSurveyConditionTwo(uid).
-                child(TimeUtil.getDateSimple()).updateChildren(
-                mapOf(
-                    DBParameters.TOOK_SURVEY to "no"
-                )
-            )
+
+            saveLastCondition2("no")
 
         }else if(action == "yes"){
             showSurveyConditionTwoNotification(context.applicationContext)
             val uid = Amplify.Auth.currentUser?.userId ?: return
-            DBAccessPoint.getUserSurveyLastConditionTwo(uid).setValue(
-                Calendar.getInstance().timeInMillis
-            )
-            DBAccessPoint.getUserSurveyConditionTwo(uid).
-            child(TimeUtil.getDateSimple()).updateChildren(
-                mapOf(
-                    DBParameters.RESPONSE to "yes"
-                )
-            )
+            saveLastCondition2("yes")
+        }
+    }
+
+    private fun saveLastCondition2(took:String){
+        uid?:return
+        val nowMS = Calendar.getInstance().timeInMillis
+
+        DB.get(uid, User::class.java){
+            val u = (it.data as User).copyOfBuilder()
+                .surveyLastUpdate2(
+                    SurveyUpdateLastCase2
+                        .builder()
+                        .time(Temporal.DateTime(Date(nowMS),0)).tookSurvey(took).build()
+                ).build()
+            DB.save(u){}
         }
     }
 
@@ -96,6 +99,8 @@ class NotificationReceiver : BroadcastReceiver() {
         val action1Id = 144
         val actionIntent = Intent(context.applicationContext, SurveyActivity::class.java)
         actionIntent.action = "yes"
+        actionIntent.putExtra(SurveyActivity.SURVEY_CASE_EXTRA,SurveyActivity.SURVEY_CASE_2)
+
         val actionPIntent = PendingIntent.getActivity(context.applicationContext, action1Id, actionIntent, 0)
         val action1 = NotificationCompat
             .Action

@@ -6,10 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.collection.ArrayMap
 import androidx.fragment.app.Fragment
-import com.example.sleeptracker.database.DBAccessPoint
-import com.example.sleeptracker.models.SleepPeriod
 import com.example.sleeptracker.databinding.FragmentWeekReportBinding
-import com.example.sleeptracker.objects.Period
 import com.example.sleeptracker.ui.statistics.utils.WeekXAxisValueFormatter
 import com.example.sleeptracker.ui.statistics.utils.WeekYAxisValueFormatter
 import com.example.sleeptracker.utils.androidutils.ScreenUtils
@@ -21,7 +18,6 @@ import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.interfaces.datasets.IBarDataSet
-import com.google.firebase.ktx.Firebase
 import java.util.*
 
 

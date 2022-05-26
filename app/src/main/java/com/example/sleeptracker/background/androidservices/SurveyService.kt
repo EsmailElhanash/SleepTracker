@@ -9,10 +9,14 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import com.amplifyframework.core.Amplify
+import com.amplifyframework.core.model.Model
+import com.amplifyframework.core.model.query.Where
+import com.amplifyframework.core.model.temporal.Temporal
+import com.amplifyframework.datastore.generated.model.TrackerPeriod
 import com.example.sleeptracker.R
+import com.example.sleeptracker.aws.DB
 import com.example.sleeptracker.background.receivers.SurveyAlarmReceiver
-import com.example.sleeptracker.database.DBAccessPoint
-import com.example.sleeptracker.models.SurveysViewModel
+import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.utils.LAST_SURVEY_NOTIFICATION
 import com.example.sleeptracker.utils.PREFERENCES_NAME
@@ -20,7 +24,6 @@ import com.example.sleeptracker.utils.androidutils.NotificationType
 import com.example.sleeptracker.utils.androidutils.NotificationsManager
 import com.example.sleeptracker.utils.time.DAY_IN_MS
 import com.example.sleeptracker.utils.time.TimeUtil
-import com.google.firebase.ktx.Firebase
 import java.util.*
 
 const val SURVEY_ALARM_ID = 12321
@@ -29,6 +32,7 @@ private const val DISPLAYABLE_DAYS_COUNT = 7
 class SurveyService : Service() {
 
     private var isForeground: Boolean = false
+    private val user = UserModel.user
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         goForeGround()
         scheduleSurveyCheck()
@@ -48,74 +52,71 @@ class SurveyService : Service() {
             onComplete()
             return
         }
-        SurveysViewModel().surveyLastUpdated
-            .observeForever{
+
+        user.getSurveyLastUpdatedCaseOne{ last1->
+            user.getSurveyRetakePeriod { retake->
                 try {
-                    if (it != null) {
-                        if (nowMS>=(it+28* DAY_IN_MS)){
-                            NotificationsManager.displaySurveyNotification(applicationContext)
-                            pref.edit().putLong(LAST_SURVEY_NOTIFICATION, nowMS).apply()
-                        }
+                    if (nowMS>=(last1+retake* DAY_IN_MS)){
+                        NotificationsManager.displaySurveyNotification(applicationContext)
+                        pref.edit().putLong(LAST_SURVEY_NOTIFICATION, nowMS).apply()
                     }
                     onComplete()
                 } catch (e: Exception) {onComplete()}
             }
+        }
+
     }
 
     private fun checkSurveyConditionTwo(onComplete: () -> Unit){
-        val uid = Amplify.Auth.currentUser?.userId ?: return
-
         val nowMS = Calendar.getInstance().timeInMillis
         var s1 : Long? = null
         var s2 : Long? = null
         var loadPeriodsData = {}
-        val checkDate = {c1:Long , c2:Long ->
-            if (nowMS > c1 + 7 * DAY_IN_MS && nowMS > c2 + 28 * DAY_IN_MS){
-                loadPeriodsData()
-            }else{
-                onComplete()
+        val checkDate = { c1:Long , c2:Long ->
+            user.getSurveyRetakePeriod {
+                if (nowMS > c1 + 7 * DAY_IN_MS && nowMS > c2 + it * DAY_IN_MS) {
+                    loadPeriodsData()
+                } else {
+                    onComplete()
+                }
             }
          }
-        SurveysViewModel().surveyLastUpdated
-            .observeForever{
-                s1 = it?: 0
-                if (s1!=null && s2!=null)checkDate(s1!!, s2!!)
-            }
-        SurveysViewModel().surveyLastShownCase2
-            .observeForever{
-                s2 = it?: 0
-                if (s1!=null && s2!=null)checkDate(s1!!, s2!!)
-            }
 
-        val periodsIDs = getPeriodsIDs()
+        UserModel.user.getSurveyLastUpdatedCaseOne{
+            s1 = it
+            if (s1!=null && s2!=null)checkDate(s1!!, s2!!)
+        }
+
+
+        UserModel.user.getSurveyLastUpdatedCaseTwo{
+            s2 = it
+            if (s1!=null && s2!=null)checkDate(s1!!, s2!!)
+        }
+
+
         var checkCondition = {}
 
         val sortedMovementCount :SortedMap<Long,Int> = sortedMapOf()
         val sortedDisturbancesCount :SortedMap<Long,Int> = sortedMapOf()
-        loadPeriodsData = {
-            DBAccessPoint.getTrackerDirectory(uid)
-                .orderByKey()
-                .startAt(periodsIDs.last())
-                .endAt("${periodsIDs.first()}, 23:59")
-                .get().addOnSuccessListener { snapshot ->
-                    val shots = snapshot.children.toList()
-                    shots.forEach {
-                        val pid = it.key ?:return@addOnSuccessListener
-                        val ms = TimeUtil.pidToMS(pid)
-                        try {
-                            val count = it.child("Disturbances Count").value.toString().toInt()
-                            sortedDisturbancesCount[ms]=count
-                        }catch (e:Exception){}
 
-                        try {
-                            val count = it.child("Movement Count").value.toString().toInt()
-                            sortedMovementCount[ms]=count
-                        }catch (e:Exception){}
-                    }
-                    checkCondition()
-                }.addOnFailureListener{
-                    onComplete()
+        loadPeriodsData = {
+            getPeriodsData{
+                it?.forEach let@{ model ->
+                    if (model !is TrackerPeriod) return@let
+                    val ms = model.createdAt?.toDate()?.time
+                    try {
+                        val count = model.disturbancesCount.toInt()
+                        sortedDisturbancesCount[ms]=count
+                    }catch (e:Exception){}
+
+                    try {
+                        val count = model.averageMovementCount.toInt()
+                        sortedMovementCount[ms]=count
+                    }catch (e:Exception){}
                 }
+
+                checkCondition()
+            }
         }
         checkCondition = {
             val movementCountList = arrayListOf<Int>()
@@ -146,17 +147,42 @@ class SurveyService : Service() {
                     if (last5Count >= 3) shouldShowConditionTwoNotification = true
                 }
             }
-            if (shouldShowConditionTwoNotification)
-                NotificationsManager.showSurveyConditionTwoNotification(this)
+            if (shouldShowConditionTwoNotification) {
+                user.getSurveyLastUpdatedCaseOne{ last1->
+                    user.getSurveyLastUpdatedCaseTwo { last2 ->
+                        user.getSurveyRetakePeriod { retake ->
+                            if (nowMS >= (last1 + retake * DAY_IN_MS)) {
+                                if (nowMS >= (last2 + retake * DAY_IN_MS)){
+                                    NotificationsManager.showSurveyConditionTwoNotification(this)
+                                }
+                            }
+                        }
+                        onComplete()
+                    }
+                }
+            }
+
             onComplete()
         }
     }
 
-    private fun getPeriodsIDs() : Array<String> {
-        val nowMS = Calendar.getInstance().timeInMillis - DAY_IN_MS
-        return Array(DISPLAYABLE_DAYS_COUNT) {
-            TimeUtil.getIDSimpleFormat(nowMS - (it * DAY_IN_MS))
+    private fun getPeriodsData(onComplete: (trackerPeriods: List<Model>?) -> Unit){
+        val range = getPeriodsRange()
+        DB.getPredicate(
+            Where.matches(
+                TrackerPeriod.CREATED_AT.between(range.first,range.second)
+            ).queryPredicate,
+            TrackerPeriod::class.java
+        ){
+            onComplete(it.data)
         }
+    }
+
+    private fun getPeriodsRange() : Pair<String,String> {
+        val nowMS = Calendar.getInstance().timeInMillis
+        val st = Temporal.DateTime(Date(nowMS),0).toString()
+        val ed = Temporal.DateTime(Date(nowMS- 7 * DAY_IN_MS),0).toString()
+        return Pair(st,ed)
     }
 
     @SuppressLint("UnspecifiedImmutableFlag")
@@ -195,7 +221,6 @@ class SurveyService : Service() {
     override fun onBind(intent: Intent?): IBinder? {
         return null
     }
-
 
     private fun goForeGround(){
         val pendingIntent: PendingIntent =

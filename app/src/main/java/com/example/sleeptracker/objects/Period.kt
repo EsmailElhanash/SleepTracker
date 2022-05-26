@@ -1,14 +1,8 @@
 package com.example.sleeptracker.objects
 
-import com.amplifyframework.core.Amplify
-import com.example.sleeptracker.database.DBAccessPoint
 import com.example.sleeptracker.utils.MINUTE_IN_MS
-import com.example.sleeptracker.utils.time.DateFormatter
+import com.example.sleeptracker.utils.time.IDFormatter
 import com.example.sleeptracker.utils.time.TimeUtil
-import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.*
-import java.util.*
-import kotlin.collections.ArrayList
 
 data class Period(
         val periodStartMS : Long,
@@ -26,10 +20,10 @@ data class Period(
     }
 
     fun getPeriodID():String {
-        return DateFormatter.getID(periodStartMS)
+        return IDFormatter.getID(periodStartMS)
     }
     fun getBasicID():String {
-        return DateFormatter.getIDSimple(getPeriodID())
+        return IDFormatter.getIDSimple(getPeriodID())
     }
 
     fun getMinuteRangePeriodID():String {

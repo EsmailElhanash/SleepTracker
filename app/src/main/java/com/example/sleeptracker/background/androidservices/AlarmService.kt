@@ -30,6 +30,10 @@ class AlarmService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if(!isForeground)  prepareAlarmStartTime()
+        else {
+            stopForeground()
+            prepareAlarmStartTime()
+        }
         return START_NOT_STICKY
     }
 
@@ -37,7 +41,7 @@ class AlarmService : Service() {
         goForeGround()
         var workDaysGroup : DaysGroup? = null
         var offDaysGroup : DaysGroup? = null
-        UserModel().workDays.observeForever{
+        UserModel.user.workDays.observeForever{
             if (it != null) {
                 workDaysGroup = it
                 if (workDaysGroup!=null && offDaysGroup!=null)
@@ -45,7 +49,7 @@ class AlarmService : Service() {
 
             }
         }
-        UserModel().offDays.observeForever {
+        UserModel.user.offDays.observeForever {
             if (it != null) {
                 offDaysGroup = it
                 if (workDaysGroup!=null && offDaysGroup!=null)

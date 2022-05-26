@@ -45,7 +45,7 @@ class SignUpActivity : AppCompatActivity()
 
 
     companion object {
-        const val c = 114
+        const val c = 116
     }
 
     private lateinit var binding: ActivitySignUpBinding
@@ -233,14 +233,13 @@ class SignUpActivity : AppCompatActivity()
                 .sid(id2)
                 .offDay(offDays)
                 .workday(workDays)
-                .id(id1)
+                .retakeSurveyPeriod(28)
                 .build()
 
             DB.save(u){
                 if (it.success){
                     runOnUiThread {
-//                        user.workDaysLivedata.postValue(daysGroups.first)
-//                        user.offDaysLivedata.postValue(daysGroups.second)
+                        user.init()
                         val consentIntent = Intent(this,ConsentActivity::class.java)
                         startActivity(consentIntent)
                     }

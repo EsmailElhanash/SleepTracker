@@ -1,14 +1,13 @@
-type SubPeriod @model @auth(rules: [{allow: owner}]){
-  id:ID!
-  Range: String
-  MovementCount: Int
+type SubPeriod {
+  Range: String!
+  MovementCount: Int!
 }
 
-type DeviceState @model @auth(rules: [{allow: owner}]){
-  id:ID!
+type DeviceState{
   Time: String!
   State: String!
 }
+
 
 type TrackerPeriod @model @auth(rules: [{allow: owner}]){
   id: ID!
@@ -20,14 +19,17 @@ type TrackerPeriod @model @auth(rules: [{allow: owner}]){
   SleepDuration: String
   DurationInNumbers: String
   DisturbancesCount: String
-  SubPeriods:[SubPeriod] @hasMany
-  DeviceStates: [DeviceState] @hasMany
+  SubPeriods:[SubPeriod]
+  Sessions: [String]
+  DeviceStates: [DeviceState]
   TotalMovements: Int
   AccelerometerLastReading: Float
+  createdAt: AWSDateTime!
 }
 
 type SurveyEntry @model @auth(rules: [{allow: owner}]){
   id: ID!
+  userId: String!
   date: AWSDateTime!
   survey1: AWSJSON!
   survey2: AWSJSON!
@@ -40,6 +42,11 @@ type DayGroup {
   Days: [String]!
 }
 
+type SurveyUpdateLastCase2 {
+    time: AWSDateTime!
+    took_survey: String!
+}
+
 type User @model @auth(rules: [{allow: owner}]){
   id: ID!
   sid: String!
@@ -47,7 +54,8 @@ type User @model @auth(rules: [{allow: owner}]){
   offDay: DayGroup!
   workday: DayGroup!
   surveyLastUpdate: AWSDateTime
-  surveyLastUpdate2: AWSDateTime
+  surveyLastUpdate2: SurveyUpdateLastCase2
+  retakeSurveyPeriod: Int!
   surveys: [SurveyEntry] @hasMany
   tracker: [TrackerPeriod] @hasMany
 }

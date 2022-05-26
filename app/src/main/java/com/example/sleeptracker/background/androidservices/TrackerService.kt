@@ -10,7 +10,13 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.IBinder
 import android.os.PowerManager
+import android.widget.Toast
+import com.amplifyframework.AmplifyException
+import com.amplifyframework.api.aws.AWSApiPlugin
+import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin
 import com.amplifyframework.core.Amplify
+import com.amplifyframework.core.AmplifyConfiguration
+import com.amplifyframework.datastore.AWSDataStorePlugin
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.MySensorsManager
 import com.example.sleeptracker.background.receivers.StateReceiver
@@ -21,6 +27,8 @@ import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.ui.statistics.daily.HOUR_IN_MS
 import com.example.sleeptracker.utils.androidutils.NotificationType
 import com.example.sleeptracker.utils.androidutils.NotificationsManager
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.util.*
 
 
@@ -32,9 +40,9 @@ class TrackerService : Service(){
     private var wakeLock : PowerManager.WakeLock? = null
     private var foreGroundNotification: Notification? = null
     private var sensorsManager: MySensorsManager? = null
-    private var tracking : Boolean = false
 
     companion object{
+        private var tracking : Boolean = false
         private var activePeriod: SleepPeriod? = null
         fun getActivePeriod(): SleepPeriod? {
             return activePeriod
@@ -44,7 +52,8 @@ class TrackerService : Service(){
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        checkPeriod()
+        configureAWS { checkPeriod() }
+
         return START_STICKY
     }
 
@@ -52,7 +61,7 @@ class TrackerService : Service(){
     private fun checkPeriod(){
         if (!tracking) startForegroundPeriodCheck()
         var inPeriod = false
-        UserModel().getSleepPeriodCallBack { periods ->
+        UserModel.user.getSleepPeriodCallBack { periods ->
             periods.forEach {
                 if (Calendar.getInstance().timeInMillis in it.periodStartMS .. it.periodEndMS){
                     if (!tracking) startTracking(it)
@@ -103,7 +112,6 @@ class TrackerService : Service(){
         startForegroundTracking()
         tracking = true
         activePeriod = SleepPeriod(period)
-        activePeriod!!.initialize()
 
         val periodLength = period.periodEndMS - period.periodStartMS + 2 * HOUR_IN_MS
         wakeLockPeriod = periodLength
@@ -162,16 +170,15 @@ class TrackerService : Service(){
 
         releaseWakeLock()
         sensorsManager?.unRegisterSensors(applicationContext)
-        activePeriod?.loadPeriod{
-            activePeriod?.saveEndTime{
-                activePeriod?.calculateSleepDuration{
-                    activePeriod?.calculateSessions{
-                        activePeriod?.calculateAverageMovementCount{
-                            activePeriod = null
-                            tracking = false
-                            stopForeground()
-                            stopSelf()
-                        }
+        activePeriod?.saveEndTime{
+            activePeriod?.calculateSleepDuration{
+                activePeriod?.calculateSessions{
+                    activePeriod?.calculateAverageMovementCount{
+                        activePeriod?.savePeriod()
+                        activePeriod = null
+                        tracking = false
+                        stopForeground()
+                        stopSelf()
                     }
                 }
             }
@@ -190,5 +197,21 @@ class TrackerService : Service(){
 
     override fun onBind(p0: Intent?): IBinder? {
         return null
+    }
+
+    private fun configureAWS(onSuccess : ()->Unit){
+        try{
+            Amplify.addPlugin(AWSDataStorePlugin())
+            Amplify.addPlugin(AWSApiPlugin())
+            Amplify.addPlugin(AWSCognitoAuthPlugin())
+            Amplify.configure(AmplifyConfiguration.fromConfigFile(this,R.raw.amplifyconfiguration),applicationContext)
+            onSuccess()
+        }catch (e: AmplifyException){
+            if (e is Amplify.AlreadyConfiguredException) {
+                onSuccess()
+                return
+            }
+            Toast.makeText(this,"Error Occurred" , Toast.LENGTH_SHORT).show()
+        }
     }
 }

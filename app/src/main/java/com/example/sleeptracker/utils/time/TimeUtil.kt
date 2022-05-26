@@ -11,7 +11,7 @@ const val DAY_IN_MS : Long = 86400000
 object TimeUtil {
     fun getLocalDate():String{
         val dateMs = Calendar.getInstance().timeInMillis
-        return DateFormatter.getID(dateMs)
+        return IDFormatter.getID(dateMs)
     }
 
 
@@ -26,7 +26,7 @@ object TimeUtil {
     }
 
     fun getIDDateFormat(ms: Long):String{
-        return DateFormatter.getID(ms)
+        return IDFormatter.getID(ms)
     }
 
 //    fun getIDSimpleFormat(ms: Long):String{
@@ -71,7 +71,7 @@ object TimeUtil {
     }
 
     private fun getFractionalExactDate(pid:String, timeString: String):Long?{
-        val pid2 = DateFormatter.getIDSimple(pid)
+        val pid2 = IDFormatter.getIDSimple(pid)
         val dateMs = "$pid2 $timeString"
         val pattern = "MMM dd, yyyy HH:mm:ss:SSS"
         val formatter = SimpleDateFormat(pattern, Locale.ENGLISH)
@@ -102,7 +102,7 @@ object TimeUtil {
     }
 
     fun timeFormatToMS(timeString: String, pid: String):Long?{
-        val pid2 = DateFormatter.getIDSimple(pid)
+        val pid2 = IDFormatter.getIDSimple(pid)
         val fullDateString = "$pid2 $timeString"
         val pattern = "MMM dd, yyyy HH:mm:ss"
         val formatter = SimpleDateFormat(pattern, Locale.ENGLISH)
@@ -114,7 +114,7 @@ object TimeUtil {
     }
 
     fun getTimeMS(time: String, pid: String):Long?{
-        val pid2 = DateFormatter.getIDSimple(pid)
+        val pid2 = IDFormatter.getIDSimple(pid)
         val fullDateString = "$pid2 $time"
         val pattern = "MMM dd, yyyy"
         val formatter = SimpleDateFormat(pattern, Locale.ENGLISH)
@@ -248,6 +248,6 @@ object TimeUtil {
     }
 
     fun getIDSimpleFormat(ms: Long):String{
-        return DateFormatter.getIDSimple(DateFormatter.getID(ms))
+        return IDFormatter.getIDSimple(IDFormatter.getID(ms))
     }
 }

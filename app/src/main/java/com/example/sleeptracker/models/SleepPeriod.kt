@@ -1,5 +1,6 @@
 package com.example.sleeptracker.models
 
+import com.amplifyframework.core.model.temporal.Temporal
 import com.amplifyframework.datastore.generated.model.DeviceState
 import com.amplifyframework.datastore.generated.model.SubPeriod
 import com.amplifyframework.datastore.generated.model.TrackerPeriod
@@ -10,61 +11,92 @@ import com.example.sleeptracker.utils.time.TimeUtil
 import java.util.*
 
 
-class SleepPeriod(val period: Period) {
+class SleepPeriod(var period: Period) {
     val id = period.getPeriodID()
+    val pid = "$id-${DB.uid}"
 
     private var trackerPeriod: TrackerPeriod = TrackerPeriod
         .builder()
         .userId(DB.uid)
         .wakeUpTime(period.getEndTime())
         .sleepTime(period.getStartTime())
+        .createdAt(Temporal.DateTime(Date(Calendar.getInstance().timeInMillis),0))
+        .id(pid)
+        .subPeriods(mutableListOf())
+        .deviceStates(mutableListOf())
+        .userTrackerId(pid)
         .build()
 
-    private val subPeriods: HashMap<String,SubPeriod> = hashMapOf()
-    private val deviceStates:ArrayList<DeviceState> = arrayListOf()
+
     private val sortedStates : SortedMap<Long,String> = sortedMapOf()
 
 
     init {
-        loadPeriod{}
-    }
-
-    fun initialize(){
-        val uid = DB.uid ?: return
-        val pid = period.getPeriodID()
-        DB.save(TrackerPeriod.builder()
-            .userId(uid)
-            .wakeUpTime(period.getEndTime())
-            .sleepTime(period.getStartTime())
-            .id(pid)
-            .userTrackerId("$uid-$pid")
-            .build()){
-
+        loadPeriod{
+            savePeriod()
         }
     }
-    fun loadPeriod(onCompleteCallback: (period:TrackerPeriod?) -> Unit) {
-        DB.get(period.getPeriodID(),TrackerPeriod::class.java){
-            val p = it.data as? TrackerPeriod ?:return@get
-            trackerPeriod = p
-            onCompleteCallback(p)
+    fun loadPeriod(onCompleteCallback: () -> Unit) {
+        DB.get(pid,TrackerPeriod::class.java){
+            val p = it.data as? TrackerPeriod
+            if (p!=null) {
+                trackerPeriod = p
+                trackerPeriod = trackerPeriod.copyOfBuilder()
+                    .deviceStates(mutableListOf())
+                    .subPeriods(mutableListOf())
+                    .build()
+                trackerPeriod.deviceStates.addAll(p.deviceStates)
+                trackerPeriod.subPeriods.addAll(p.subPeriods)
+            }
+            onCompleteCallback()
         }
     }
 
-    private fun savePeriod() {
-        DB.save(trackerPeriod){}
+//    fun updatePeriodTimes(sleepTime: String, wakeTime: String){
+//        trackerPeriod = with(trackerPeriod.copyOfBuilder()) {
+//            sleepTime(sleepTime)
+//            wakeUpTime(wakeTime)
+//            build()
+//        }
+//        UserModel().getSleepPeriodCallBack { periods ->
+//            periods.forEach {
+//                if (Calendar.getInstance().timeInMillis in it.periodStartMS .. it.periodEndMS){
+//                    val gt = period.periodGroupType
+//                    period = it
+//                    period.periodGroupType = gt
+//                    return@forEach
+//                }
+//            }
+//        }
+//        savePeriod()
+//    }
+
+    @Synchronized
+    fun savePeriod() {
+        DB.save(trackerPeriod){
+
+        }
     }
+
     fun saveEndTime(onComplete: () -> Unit?) {
         val now = Calendar.getInstance().timeInMillis
         trackerPeriod = trackerPeriod.copyOfBuilder()
             .ended(TimeUtil.formatTimeMS(now))
             .build()
-        savePeriod()
         onComplete()
     }
+
     fun saveAccelerometerReading(reading: Double){
         trackerPeriod =
             trackerPeriod.copyOfBuilder().accelerometerLastReading(reading).build()
         savePeriod()
+    }
+
+    private fun getSubPeriodWithTime(time:String): SubPeriod? {
+        return trackerPeriod.subPeriods.stream().filter {
+            time == it.range
+        }.findFirst().orElse(null)
+
     }
 
     fun saveStepTime(){
@@ -72,18 +104,23 @@ class SleepPeriod(val period: Period) {
         period.periodPortions.forEach { sp ->
             if (nowMS in sp.periodStartMS..sp.periodEndMS) {
                 val id = sp.getMinuteRangePeriodID()
-                val currentValue = subPeriods[id]
-                val newSubPeriod = if (currentValue==null)
-                    SubPeriod.builder().movementCount(1)
+                val currentValue = getSubPeriodWithTime(id)
+                if (currentValue==null) {
+                    val newSubPeriod = SubPeriod.builder()
                         .range(id)
-                        .trackerPeriodSubPeriodsId(id+"-"+period.getPeriodID())
-                        .id(id+ " " + period.getPeriodID())
+                        .movementCount(1)
                         .build()
-                else currentValue.copyOfBuilder()
-                    .movementCount(currentValue.movementCount+1).build()
+                    trackerPeriod.subPeriods.add(newSubPeriod)
 
-                subPeriods[id] = newSubPeriod
-                DB.save(newSubPeriod){}
+                }
+                else {
+                    val newValue = currentValue.copyOfBuilder()
+                        .movementCount(currentValue.movementCount+1)
+                        .build()
+                    trackerPeriod.subPeriods.remove(currentValue)
+                    trackerPeriod.subPeriods.add(newValue)
+                }
+                savePeriod()
             }
         }
 
@@ -92,37 +129,32 @@ class SleepPeriod(val period: Period) {
 
     fun saveState(state: String){
         val now = TimeUtil.getFractionalExactTime()
-        val id = state + "-" + now + period.getPeriodID()
         val ds = DeviceState
             .builder()
             .time(now)
             .state(state)
-            .trackerPeriodDeviceStatesId(id)
             .build()
-        DB.save(ds){}
-        deviceStates.add(ds)
+        trackerPeriod.deviceStates.add(ds)
+        savePeriod()
     }
 
-
-    fun calculateSleepDuration(onCompleteCallback: ((duration:Long) -> Unit)? = null) {
+    fun calculateSleepDuration(onCompleteCallback: ()->Unit) {
         val p = period
         val startCalculations = { sortedStates : SortedMap<Long,String> ->
             val longestPeriod = getLongestPeriod(sortedStates)
             val durationString = getSleepingDuration(longestPeriod)
             val duration2 = getSleepingDurationInNumbers(longestPeriod)
-            if (onCompleteCallback != null) {
-                onCompleteCallback(longestPeriod)
-            }
+
             trackerPeriod = trackerPeriod.copyOfBuilder()
                 .sleepDuration(durationString)
                 .durationInNumbers(duration2)
                 .build()
-                savePeriod()
-
+            onCompleteCallback()
         }
         //we calculate Sleep Duration using device states
         setSortedStates(p){
             val finalMap : SortedMap<Long,String> = sortedMapOf()
+//            finalMap[p.periodStartMS] = "off"
             for (i in it){
                 if (i.key<p.periodStartMS) continue
                 if (i.value == "on") continue
@@ -137,10 +169,9 @@ class SleepPeriod(val period: Period) {
     }
 
     private fun setSortedStates(p: Period,onCompleteCallback: ((sortedStates: SortedMap<Long,String>) -> Unit)){
-        if (deviceStates.size == 0){
-            loadPeriod{ period ->
-                period?.deviceStates?.let {
-                    deviceStates.addAll(it)
+        if (trackerPeriod.deviceStates.size == 0){
+            loadPeriod{
+                trackerPeriod.deviceStates?.let {
                         it.forEach lit@{state->
                         val ms = TimeUtil.getCorrectEventTimeMS(p, state.time) ?: return@lit
                         sortedStates[ms] = state.state
@@ -149,7 +180,7 @@ class SleepPeriod(val period: Period) {
                 onCompleteCallback(sortedStates)
             }
         }else{
-            deviceStates.forEach lit@{ state->
+            trackerPeriod.deviceStates?.forEach lit@{ state->
                 val ms = TimeUtil.getCorrectEventTimeMS(p, state.time) ?: return@lit
                 sortedStates[ms] = state.state
             }
@@ -158,46 +189,45 @@ class SleepPeriod(val period: Period) {
 
     }
 
-    fun calculateSessions(onCompleteCallback: ((sessions:HashMap<Long,Period>) -> Unit)? = null){
+    fun calculateSessions(onCompleteCallback: () -> Unit){
         var lastEvent : String? = null
         var lastEventTime = 0L
         val sessions : HashMap<Long,Period> = hashMapOf()
 
-
-        val calculate = { sortedStates :SortedMap<Long,String>->
-            for ((time , event) in sortedStates){
-                if (event == "User present") {
-                    if (lastEvent == "User present") {
-                        //Do nothing, as we want to keep last USER_PRESENT Event time, first one
-                    } else {
-                        lastEvent = event
-                        lastEventTime = time
+        for ((time , event) in sortedStates){
+            if (event == "User present") {
+                if (lastEvent == "User present") {
+                    //Do nothing, as we want to keep last USER_PRESENT Event time, first one
+                } else {
+                    lastEvent = event
+                    lastEventTime = time
+                }
+            } else if (event == "off") {
+                if (lastEvent == "User present") {
+                    if (time - lastEventTime > 5 * MINUTE_IN_MS) {
+                        // here we have a session
+                        // lastEventTime is session start in this case
+                        // time is session end in this case
+                        sessions[lastEventTime] = Period(lastEventTime, time)
                     }
-                } else if (event == "off") {
-                    if (lastEvent == "User present") {
-                        if (time - lastEventTime > 5 * MINUTE_IN_MS) {
-                            // here we have a session
-                            // lastEventTime is session start in this case
-                            // time is session end in this case
-                            sessions[lastEventTime] = Period(lastEventTime, time)
-                        }
-                        lastEvent = event
-                        lastEventTime = time
-                    } else {
-                        lastEvent = event
-                        lastEventTime = time
-                    }
+                    lastEvent = event
+                    lastEventTime = time
+                } else {
+                    lastEvent = event
+                    lastEventTime = time
                 }
             }
-//            saveSessions(sessions,uid)
-            if (onCompleteCallback != null) {
-                onCompleteCallback(sessions)
-            }
         }
-        calculate(sortedStates)
+        val count = sessions.size.toString()
+        val strings = mutableListOf<String>()
+        sessions.values.forEach {
+            strings.add(it.toString())
+        }
+        trackerPeriod = trackerPeriod.copyOfBuilder().disturbancesCount(count).sessions(strings).build()
+        onCompleteCallback()
     }
 
-    fun calculateAverageMovementCount(onCompleteCallback: ((totalMovementCount:Int) -> Unit)? = null){
+    fun calculateAverageMovementCount(onCompleteCallback: ()-> Unit){
         var averageMovementCount = 0
         val sortedPortions = sortedMapOf<Long,Period>()
         period.periodPortions.forEach{
@@ -205,7 +235,7 @@ class SleepPeriod(val period: Period) {
         }
         val countList = arrayListOf<Int>()
         for ((_, p) in sortedPortions){
-            val count = subPeriods[p.getMinuteRangePeriodID()]?.movementCount ?: continue
+            val count = getSubPeriodWithTime(p.getMinuteRangePeriodID())?.movementCount ?: continue
             countList.add(count)
             val lastIndex = countList.size-1
             if (lastIndex>=2){
@@ -216,12 +246,8 @@ class SleepPeriod(val period: Period) {
                 }
             }
         }
-        if (onCompleteCallback != null) {
-            onCompleteCallback(averageMovementCount)
-        }
-        val newPeriod = trackerPeriod.copyOfBuilder().averageMovementCount(averageMovementCount.toString()).build()
-        trackerPeriod = newPeriod
-        DB.save(newPeriod){}
+        trackerPeriod = trackerPeriod.copyOfBuilder().averageMovementCount(averageMovementCount.toString()).build()
+        onCompleteCallback()
     }
 
     private fun getSleepingDuration(msDuration: Long): String {

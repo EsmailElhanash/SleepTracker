@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity()  {
 //    private lateinit var auth: FirebaseAuth
 
     companion object {
-        const val TEST = false
+        const val TEST = true
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,9 +39,11 @@ class MainActivity : AppCompatActivity()  {
         configureAWS {
             val uid = Amplify.Auth?.currentUser?.userId
 
+
             if (uid==null){
                 val intent = Intent(this, LoginActivity::class.java)
                 startActivity(intent)
+                finish()
             }else {
                 DB.get(uid,User::class.java){
                     val u = it.data as User
@@ -52,12 +54,13 @@ class MainActivity : AppCompatActivity()  {
                         val intent = Intent(this, ConsentActivity::class.java)
                         startActivity(intent)
                     }
+                    finish()
                 }
             }
         }
     }
 
-    private fun configureAWS(onSuccess : ()->Unit){
+    private fun configureAWS(onSuccess : ()->Unit) {
         try{
             Amplify.addPlugin(AWSDataStorePlugin())
             Amplify.addPlugin(AWSApiPlugin())

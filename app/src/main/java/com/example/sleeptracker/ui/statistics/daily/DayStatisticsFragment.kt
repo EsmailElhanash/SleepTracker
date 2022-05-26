@@ -9,11 +9,7 @@ import android.view.ViewGroup
 import androidx.core.text.color
 import androidx.fragment.app.Fragment
 import com.amplifyframework.datastore.generated.model.TrackerPeriod
-import com.example.sleeptracker.database.utils.SnapshotExtractor
-import com.example.sleeptracker.database.utils.DBParameters
 import com.example.sleeptracker.databinding.FragmentSleepingPeriodBinding
-import com.example.sleeptracker.utils.MINUTE_IN_MS
-import com.example.sleeptracker.utils.time.TimeUtil
 
 const val HOUR_IN_MS : Long = 3600000L
 
@@ -34,34 +30,19 @@ class DayStatisticsFragment(private val period: TrackerPeriod) : Fragment() {
 
 
     private fun displayData() {
-//        val pid = period.id
-//        val stepCount = period.totalMovements
-//        binding.stepsCount.text = getStepsText(stepCount)
-//
-////        val lightSensorData: ArrayMap<String, Float> = SnapshotExtractor.getLightSensorReadings(snapshot)
-//        val sleepTime = period.sleepTime
-////            SnapshotExtractor.getSleepTime()
-//        val wakeTime = SnapshotExtractor.getWakeUpTime(period)
-//        val pairMS = TimeUtil.getStartEndPair(sleepTime,wakeTime,0)
-//        val sleepMin:Long = 0
-//        val wakeMin:Long = (pairMS.second - pairMS.first) / (MINUTE_IN_MS)
-////        if (pid != null) {
-////            setUpLightSensorGraph(
-////                binding.lightSensorGraph,
-////                lightSensorData,
-////                pid,
-////                sleepMin,
-////                wakeMin)
-////        }
-//        val wakeUpTimeText = wakeTime.toString()
-//        val sleepUpTimeText = sleepTime.toString()
-//        val periodInfoText = "$sleepUpTimeText To $wakeUpTimeText"
-//        binding.sleepingPeriod.text = periodInfoText
-//        val duration = SnapshotExtractor.getSleepDuration(period)
-//        duration?.let {
-//            val sleepDuration = "${DBParameters.SLEEP_DURATION}:\n$duration"
-//            binding.sleepDuration.text = sleepDuration
-//        }
+        val stepCount = period?.totalMovements
+        binding.stepsCount.text = getStepsText(stepCount)
+
+        val sleepTime = period?.sleepTime
+        val wakeTime = period?.ended
+
+        val wakeUpTimeText = wakeTime?.toString()
+        val sleepUpTimeText = sleepTime?.toString()
+
+        val periodInfoText = "$sleepUpTimeText To $wakeUpTimeText"
+        binding.sleepingPeriod.text = periodInfoText
+        binding.sleepDuration.text = period.sleepDuration
+
     }
 
     private fun getStepsText(stepCount: Int?): SpannableStringBuilder {

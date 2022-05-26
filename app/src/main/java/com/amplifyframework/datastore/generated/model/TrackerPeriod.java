@@ -1,6 +1,5 @@
 package com.amplifyframework.datastore.generated.model;
 
-import com.amplifyframework.core.model.annotations.HasMany;
 import com.amplifyframework.core.model.temporal.Temporal;
 
 import java.util.List;
@@ -35,8 +34,12 @@ public final class TrackerPeriod implements Model {
   public static final QueryField SLEEP_DURATION = field("TrackerPeriod", "SleepDuration");
   public static final QueryField DURATION_IN_NUMBERS = field("TrackerPeriod", "DurationInNumbers");
   public static final QueryField DISTURBANCES_COUNT = field("TrackerPeriod", "DisturbancesCount");
+  public static final QueryField SUB_PERIODS = field("TrackerPeriod", "SubPeriods");
+  public static final QueryField SESSIONS = field("TrackerPeriod", "Sessions");
+  public static final QueryField DEVICE_STATES = field("TrackerPeriod", "DeviceStates");
   public static final QueryField TOTAL_MOVEMENTS = field("TrackerPeriod", "TotalMovements");
   public static final QueryField ACCELEROMETER_LAST_READING = field("TrackerPeriod", "AccelerometerLastReading");
+  public static final QueryField CREATED_AT = field("TrackerPeriod", "createdAt");
   public static final QueryField USER_TRACKER_ID = field("TrackerPeriod", "userTrackerId");
   private final @ModelField(targetType="ID", isRequired = true) String id;
   private final @ModelField(targetType="String", isRequired = true) String userId;
@@ -47,11 +50,12 @@ public final class TrackerPeriod implements Model {
   private final @ModelField(targetType="String") String SleepDuration;
   private final @ModelField(targetType="String") String DurationInNumbers;
   private final @ModelField(targetType="String") String DisturbancesCount;
-  private final @ModelField(targetType="SubPeriod") @HasMany(associatedWith = "trackerPeriodSubPeriodsId", type = SubPeriod.class) List<SubPeriod> SubPeriods = null;
-  private final @ModelField(targetType="DeviceState") @HasMany(associatedWith = "trackerPeriodDeviceStatesId", type = DeviceState.class) List<DeviceState> DeviceStates = null;
+  private final @ModelField(targetType="SubPeriod") List<SubPeriod> SubPeriods;
+  private final @ModelField(targetType="String") List<String> Sessions;
+  private final @ModelField(targetType="DeviceState") List<DeviceState> DeviceStates;
   private final @ModelField(targetType="Int") Integer TotalMovements;
   private final @ModelField(targetType="Float") Double AccelerometerLastReading;
-  private @ModelField(targetType="AWSDateTime", isReadOnly = true) Temporal.DateTime createdAt;
+  private final @ModelField(targetType="AWSDateTime", isRequired = true) Temporal.DateTime createdAt;
   private @ModelField(targetType="AWSDateTime", isReadOnly = true) Temporal.DateTime updatedAt;
   private final @ModelField(targetType="ID") String userTrackerId;
   public String getId() {
@@ -94,6 +98,10 @@ public final class TrackerPeriod implements Model {
       return SubPeriods;
   }
   
+  public List<String> getSessions() {
+      return Sessions;
+  }
+  
   public List<DeviceState> getDeviceStates() {
       return DeviceStates;
   }
@@ -118,7 +126,7 @@ public final class TrackerPeriod implements Model {
       return userTrackerId;
   }
   
-  private TrackerPeriod(String id, String userId, String WakeUpTime, String SleepTime, String ended, String AverageMovementCount, String SleepDuration, String DurationInNumbers, String DisturbancesCount, Integer TotalMovements, Double AccelerometerLastReading, String userTrackerId) {
+  private TrackerPeriod(String id, String userId, String WakeUpTime, String SleepTime, String ended, String AverageMovementCount, String SleepDuration, String DurationInNumbers, String DisturbancesCount, List<SubPeriod> SubPeriods, List<String> Sessions, List<DeviceState> DeviceStates, Integer TotalMovements, Double AccelerometerLastReading, Temporal.DateTime createdAt, String userTrackerId) {
     this.id = id;
     this.userId = userId;
     this.WakeUpTime = WakeUpTime;
@@ -128,8 +136,12 @@ public final class TrackerPeriod implements Model {
     this.SleepDuration = SleepDuration;
     this.DurationInNumbers = DurationInNumbers;
     this.DisturbancesCount = DisturbancesCount;
+    this.SubPeriods = SubPeriods;
+    this.Sessions = Sessions;
+    this.DeviceStates = DeviceStates;
     this.TotalMovements = TotalMovements;
     this.AccelerometerLastReading = AccelerometerLastReading;
+    this.createdAt = createdAt;
     this.userTrackerId = userTrackerId;
   }
   
@@ -150,6 +162,9 @@ public final class TrackerPeriod implements Model {
               ObjectsCompat.equals(getSleepDuration(), trackerPeriod.getSleepDuration()) &&
               ObjectsCompat.equals(getDurationInNumbers(), trackerPeriod.getDurationInNumbers()) &&
               ObjectsCompat.equals(getDisturbancesCount(), trackerPeriod.getDisturbancesCount()) &&
+              ObjectsCompat.equals(getSubPeriods(), trackerPeriod.getSubPeriods()) &&
+              ObjectsCompat.equals(getSessions(), trackerPeriod.getSessions()) &&
+              ObjectsCompat.equals(getDeviceStates(), trackerPeriod.getDeviceStates()) &&
               ObjectsCompat.equals(getTotalMovements(), trackerPeriod.getTotalMovements()) &&
               ObjectsCompat.equals(getAccelerometerLastReading(), trackerPeriod.getAccelerometerLastReading()) &&
               ObjectsCompat.equals(getCreatedAt(), trackerPeriod.getCreatedAt()) &&
@@ -170,6 +185,9 @@ public final class TrackerPeriod implements Model {
       .append(getSleepDuration())
       .append(getDurationInNumbers())
       .append(getDisturbancesCount())
+      .append(getSubPeriods())
+      .append(getSessions())
+      .append(getDeviceStates())
       .append(getTotalMovements())
       .append(getAccelerometerLastReading())
       .append(getCreatedAt())
@@ -192,6 +210,9 @@ public final class TrackerPeriod implements Model {
       .append("SleepDuration=" + String.valueOf(getSleepDuration()) + ", ")
       .append("DurationInNumbers=" + String.valueOf(getDurationInNumbers()) + ", ")
       .append("DisturbancesCount=" + String.valueOf(getDisturbancesCount()) + ", ")
+      .append("SubPeriods=" + String.valueOf(getSubPeriods()) + ", ")
+      .append("Sessions=" + String.valueOf(getSessions()) + ", ")
+      .append("DeviceStates=" + String.valueOf(getDeviceStates()) + ", ")
       .append("TotalMovements=" + String.valueOf(getTotalMovements()) + ", ")
       .append("AccelerometerLastReading=" + String.valueOf(getAccelerometerLastReading()) + ", ")
       .append("createdAt=" + String.valueOf(getCreatedAt()) + ", ")
@@ -226,6 +247,10 @@ public final class TrackerPeriod implements Model {
       null,
       null,
       null,
+      null,
+      null,
+      null,
+      null,
       null
     );
   }
@@ -240,8 +265,12 @@ public final class TrackerPeriod implements Model {
       SleepDuration,
       DurationInNumbers,
       DisturbancesCount,
+      SubPeriods,
+      Sessions,
+      DeviceStates,
       TotalMovements,
       AccelerometerLastReading,
+      createdAt,
       userTrackerId);
   }
   public interface UserIdStep {
@@ -255,7 +284,12 @@ public final class TrackerPeriod implements Model {
   
 
   public interface SleepTimeStep {
-    BuildStep sleepTime(String sleepTime);
+    CreatedAtStep sleepTime(String sleepTime);
+  }
+  
+
+  public interface CreatedAtStep {
+    BuildStep createdAt(Temporal.DateTime createdAt);
   }
   
 
@@ -267,22 +301,29 @@ public final class TrackerPeriod implements Model {
     BuildStep sleepDuration(String sleepDuration);
     BuildStep durationInNumbers(String durationInNumbers);
     BuildStep disturbancesCount(String disturbancesCount);
+    BuildStep subPeriods(List<SubPeriod> subPeriods);
+    BuildStep sessions(List<String> sessions);
+    BuildStep deviceStates(List<DeviceState> deviceStates);
     BuildStep totalMovements(Integer totalMovements);
     BuildStep accelerometerLastReading(Double accelerometerLastReading);
     BuildStep userTrackerId(String userTrackerId);
   }
   
 
-  public static class Builder implements UserIdStep, WakeUpTimeStep, SleepTimeStep, BuildStep {
+  public static class Builder implements UserIdStep, WakeUpTimeStep, SleepTimeStep, CreatedAtStep, BuildStep {
     private String id;
     private String userId;
     private String WakeUpTime;
     private String SleepTime;
+    private Temporal.DateTime createdAt;
     private String ended;
     private String AverageMovementCount;
     private String SleepDuration;
     private String DurationInNumbers;
     private String DisturbancesCount;
+    private List<SubPeriod> SubPeriods;
+    private List<String> Sessions;
+    private List<DeviceState> DeviceStates;
     private Integer TotalMovements;
     private Double AccelerometerLastReading;
     private String userTrackerId;
@@ -300,8 +341,12 @@ public final class TrackerPeriod implements Model {
           SleepDuration,
           DurationInNumbers,
           DisturbancesCount,
+          SubPeriods,
+          Sessions,
+          DeviceStates,
           TotalMovements,
           AccelerometerLastReading,
+          createdAt,
           userTrackerId);
     }
     
@@ -320,9 +365,16 @@ public final class TrackerPeriod implements Model {
     }
     
     @Override
-     public BuildStep sleepTime(String sleepTime) {
+     public CreatedAtStep sleepTime(String sleepTime) {
         Objects.requireNonNull(sleepTime);
         this.SleepTime = sleepTime;
+        return this;
+    }
+    
+    @Override
+     public BuildStep createdAt(Temporal.DateTime createdAt) {
+        Objects.requireNonNull(createdAt);
+        this.createdAt = createdAt;
         return this;
     }
     
@@ -357,6 +409,24 @@ public final class TrackerPeriod implements Model {
     }
     
     @Override
+     public BuildStep subPeriods(List<SubPeriod> subPeriods) {
+        this.SubPeriods = subPeriods;
+        return this;
+    }
+    
+    @Override
+     public BuildStep sessions(List<String> sessions) {
+        this.Sessions = sessions;
+        return this;
+    }
+    
+    @Override
+     public BuildStep deviceStates(List<DeviceState> deviceStates) {
+        this.DeviceStates = deviceStates;
+        return this;
+    }
+    
+    @Override
      public BuildStep totalMovements(Integer totalMovements) {
         this.TotalMovements = totalMovements;
         return this;
@@ -386,16 +456,20 @@ public final class TrackerPeriod implements Model {
   
 
   public final class CopyOfBuilder extends Builder {
-    private CopyOfBuilder(String id, String userId, String wakeUpTime, String sleepTime, String ended, String averageMovementCount, String sleepDuration, String durationInNumbers, String disturbancesCount, Integer totalMovements, Double accelerometerLastReading, String userTrackerId) {
+    private CopyOfBuilder(String id, String userId, String wakeUpTime, String sleepTime, String ended, String averageMovementCount, String sleepDuration, String durationInNumbers, String disturbancesCount, List<SubPeriod> subPeriods, List<String> sessions, List<DeviceState> deviceStates, Integer totalMovements, Double accelerometerLastReading, Temporal.DateTime createdAt, String userTrackerId) {
       super.id(id);
       super.userId(userId)
         .wakeUpTime(wakeUpTime)
         .sleepTime(sleepTime)
+        .createdAt(createdAt)
         .ended(ended)
         .averageMovementCount(averageMovementCount)
         .sleepDuration(sleepDuration)
         .durationInNumbers(durationInNumbers)
         .disturbancesCount(disturbancesCount)
+        .subPeriods(subPeriods)
+        .sessions(sessions)
+        .deviceStates(deviceStates)
         .totalMovements(totalMovements)
         .accelerometerLastReading(accelerometerLastReading)
         .userTrackerId(userTrackerId);
@@ -414,6 +488,11 @@ public final class TrackerPeriod implements Model {
     @Override
      public CopyOfBuilder sleepTime(String sleepTime) {
       return (CopyOfBuilder) super.sleepTime(sleepTime);
+    }
+    
+    @Override
+     public CopyOfBuilder createdAt(Temporal.DateTime createdAt) {
+      return (CopyOfBuilder) super.createdAt(createdAt);
     }
     
     @Override
@@ -439,6 +518,21 @@ public final class TrackerPeriod implements Model {
     @Override
      public CopyOfBuilder disturbancesCount(String disturbancesCount) {
       return (CopyOfBuilder) super.disturbancesCount(disturbancesCount);
+    }
+    
+    @Override
+     public CopyOfBuilder subPeriods(List<SubPeriod> subPeriods) {
+      return (CopyOfBuilder) super.subPeriods(subPeriods);
+    }
+    
+    @Override
+     public CopyOfBuilder sessions(List<String> sessions) {
+      return (CopyOfBuilder) super.sessions(sessions);
+    }
+    
+    @Override
+     public CopyOfBuilder deviceStates(List<DeviceState> deviceStates) {
+      return (CopyOfBuilder) super.deviceStates(deviceStates);
     }
     
     @Override

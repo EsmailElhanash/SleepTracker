@@ -26,12 +26,14 @@ import static com.amplifyframework.core.model.query.predicate.QueryField.field;
 })
 public final class SurveyEntry implements Model {
   public static final QueryField ID = field("SurveyEntry", "id");
+  public static final QueryField USER_ID = field("SurveyEntry", "userId");
   public static final QueryField DATE = field("SurveyEntry", "date");
   public static final QueryField SURVEY1 = field("SurveyEntry", "survey1");
   public static final QueryField SURVEY2 = field("SurveyEntry", "survey2");
   public static final QueryField SURVEY3 = field("SurveyEntry", "survey3");
   public static final QueryField USER_SURVEYS_ID = field("SurveyEntry", "userSurveysId");
   private final @ModelField(targetType="ID", isRequired = true) String id;
+  private final @ModelField(targetType="String", isRequired = true) String userId;
   private final @ModelField(targetType="AWSDateTime", isRequired = true) Temporal.DateTime date;
   private final @ModelField(targetType="AWSJSON", isRequired = true) String survey1;
   private final @ModelField(targetType="AWSJSON", isRequired = true) String survey2;
@@ -41,6 +43,10 @@ public final class SurveyEntry implements Model {
   private final @ModelField(targetType="ID") String userSurveysId;
   public String getId() {
       return id;
+  }
+  
+  public String getUserId() {
+      return userId;
   }
   
   public Temporal.DateTime getDate() {
@@ -71,8 +77,9 @@ public final class SurveyEntry implements Model {
       return userSurveysId;
   }
   
-  private SurveyEntry(String id, Temporal.DateTime date, String survey1, String survey2, String survey3, String userSurveysId) {
+  private SurveyEntry(String id, String userId, Temporal.DateTime date, String survey1, String survey2, String survey3, String userSurveysId) {
     this.id = id;
+    this.userId = userId;
     this.date = date;
     this.survey1 = survey1;
     this.survey2 = survey2;
@@ -89,6 +96,7 @@ public final class SurveyEntry implements Model {
       } else {
       SurveyEntry surveyEntry = (SurveyEntry) obj;
       return ObjectsCompat.equals(getId(), surveyEntry.getId()) &&
+              ObjectsCompat.equals(getUserId(), surveyEntry.getUserId()) &&
               ObjectsCompat.equals(getDate(), surveyEntry.getDate()) &&
               ObjectsCompat.equals(getSurvey1(), surveyEntry.getSurvey1()) &&
               ObjectsCompat.equals(getSurvey2(), surveyEntry.getSurvey2()) &&
@@ -103,6 +111,7 @@ public final class SurveyEntry implements Model {
    public int hashCode() {
     return new StringBuilder()
       .append(getId())
+      .append(getUserId())
       .append(getDate())
       .append(getSurvey1())
       .append(getSurvey2())
@@ -119,6 +128,7 @@ public final class SurveyEntry implements Model {
     return new StringBuilder()
       .append("SurveyEntry {")
       .append("id=" + String.valueOf(getId()) + ", ")
+      .append("userId=" + String.valueOf(getUserId()) + ", ")
       .append("date=" + String.valueOf(getDate()) + ", ")
       .append("survey1=" + String.valueOf(getSurvey1()) + ", ")
       .append("survey2=" + String.valueOf(getSurvey2()) + ", ")
@@ -130,7 +140,7 @@ public final class SurveyEntry implements Model {
       .toString();
   }
   
-  public static DateStep builder() {
+  public static UserIdStep builder() {
       return new Builder();
   }
   
@@ -149,18 +159,25 @@ public final class SurveyEntry implements Model {
       null,
       null,
       null,
+      null,
       null
     );
   }
   
   public CopyOfBuilder copyOfBuilder() {
     return new CopyOfBuilder(id,
+      userId,
       date,
       survey1,
       survey2,
       survey3,
       userSurveysId);
   }
+  public interface UserIdStep {
+    DateStep userId(String userId);
+  }
+  
+
   public interface DateStep {
     Survey1Step date(Temporal.DateTime date);
   }
@@ -188,8 +205,9 @@ public final class SurveyEntry implements Model {
   }
   
 
-  public static class Builder implements DateStep, Survey1Step, Survey2Step, Survey3Step, BuildStep {
+  public static class Builder implements UserIdStep, DateStep, Survey1Step, Survey2Step, Survey3Step, BuildStep {
     private String id;
+    private String userId;
     private Temporal.DateTime date;
     private String survey1;
     private String survey2;
@@ -201,11 +219,19 @@ public final class SurveyEntry implements Model {
         
         return new SurveyEntry(
           id,
+          userId,
           date,
           survey1,
           survey2,
           survey3,
           userSurveysId);
+    }
+    
+    @Override
+     public DateStep userId(String userId) {
+        Objects.requireNonNull(userId);
+        this.userId = userId;
+        return this;
     }
     
     @Override
@@ -254,13 +280,19 @@ public final class SurveyEntry implements Model {
   
 
   public final class CopyOfBuilder extends Builder {
-    private CopyOfBuilder(String id, Temporal.DateTime date, String survey1, String survey2, String survey3, String userSurveysId) {
+    private CopyOfBuilder(String id, String userId, Temporal.DateTime date, String survey1, String survey2, String survey3, String userSurveysId) {
       super.id(id);
-      super.date(date)
+      super.userId(userId)
+        .date(date)
         .survey1(survey1)
         .survey2(survey2)
         .survey3(survey3)
         .userSurveysId(userSurveysId);
+    }
+    
+    @Override
+     public CopyOfBuilder userId(String userId) {
+      return (CopyOfBuilder) super.userId(userId);
     }
     
     @Override
