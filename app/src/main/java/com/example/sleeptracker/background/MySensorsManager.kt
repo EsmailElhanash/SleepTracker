@@ -7,9 +7,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import com.amplifyframework.core.Amplify
 import com.example.sleeptracker.models.SleepPeriod
-import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.*
-import kotlin.math.abs
 import kotlin.math.sqrt
 
 class MySensorsManager(private val period: SleepPeriod) : SensorEventListener {

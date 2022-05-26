@@ -1,15 +1,13 @@
 package com.example.sleeptracker.models
 
-import android.content.Context
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.amplifyframework.core.Amplify
 import com.amplifyframework.datastore.generated.model.DayGroup
 import com.amplifyframework.datastore.generated.model.User
-import com.example.sleeptracker.R
 import com.example.sleeptracker.aws.DB
+import com.example.sleeptracker.background.androidservices.TrackerService
 import com.example.sleeptracker.database.utils.DBParameters.DAYS
 import com.example.sleeptracker.objects.DaysGroup
 import com.example.sleeptracker.objects.GroupType
@@ -21,27 +19,79 @@ import java.util.*
 
 
 class UserModel : ViewModel() {
-    var uid: String? = Amplify.Auth?.currentUser?.userId
+    companion object {
+        val user = UserModel()
+    }
+    var uid: String? = DB.uid
 //    //Sleep Data
+    val workDays : MutableLiveData<DaysGroup> = MutableLiveData()
+    val offDays : MutableLiveData<DaysGroup> = MutableLiveData()
 
-
-    private val workDaysLivedata : MutableLiveData<DaysGroup> = MutableLiveData()
-    val workDays : LiveData<DaysGroup> get() = workDaysLivedata
-    private val offDaysLivedata : MutableLiveData<DaysGroup> = MutableLiveData()
-    val offDays : LiveData<DaysGroup> get() = offDaysLivedata
-
+    private var surveyLastUpdated: Long? = null
+    private var surveyLastUpdated2: Long? = null
+    private var surveyRetakePeriod: Int? = null
 
     init {
-        uid?.let { loadSleepTimes(it) }
+        uid?.let {
+            loadUser(it){}
+        }
+    }
+
+    fun init (){
+        uid = DB.uid
+        uid?.let {
+            loadUser(it){}
+        }
+    }
+
+    fun getSurveyRetakePeriod(onComplete: (p:Int) -> Unit) {
+        val retakePeriod = surveyRetakePeriod
+        if (retakePeriod!=null) onComplete(retakePeriod)
+        else {
+            uid?.let {
+                loadUser(it){
+                    val retakePeriod2 = surveyRetakePeriod
+                    if (retakePeriod2!=null) onComplete(retakePeriod2)
+                }
+            }
+        }
+    }
+
+    fun getSurveyLastUpdatedCaseOne(onComplete: (date:Long) -> Unit) {
+        val last = surveyLastUpdated
+        if (last!=null) onComplete(last)
+        else {
+            uid?.let {
+                loadUser(it){
+                    val last2 = surveyLastUpdated
+                    if (last2!=null) onComplete(last2)
+                }
+            }
+        }
+    }
+
+    fun getSurveyLastUpdatedCaseTwo(onComplete: (date:Long) -> Unit) {
+        val last = surveyLastUpdated2
+        if (last!=null) onComplete(last)
+        else {
+            uid?.let {
+                loadUser(it){
+                    val last2 = surveyLastUpdated2
+                    if (last2!=null) onComplete(last2)
+                }
+            }
+        }
     }
 
     fun getWorkDaysOnce(send:(workDays:DaysGroup)->Unit){
         val wd = workDays.value
         if (wd!=null) send(wd)
         else {
-            uid?.let { loadSleepTimes(it){ workDays, _ ->
-                send(workDays)
-            } }
+            uid?.let {
+                loadUser(it){
+                    workDays.value?.let{wd->send(wd)}
+                }
+            }
         }
     }
 
@@ -49,9 +99,11 @@ class UserModel : ViewModel() {
         val od = offDays.value
         if (od!=null) send(od)
         else {
-            uid?.let { loadSleepTimes(it){_, offDays ->
-                send(offDays)
-            } }
+            uid?.let {
+                loadUser(it){
+                    offDays.value?.let{od->send(od)}
+                }
+            }
         }
     }
 
@@ -64,7 +116,7 @@ class UserModel : ViewModel() {
         DB.get(id,User::class.java){ response ->
             if (response.success){
                 val edited = (response.data as User).copyOfBuilder().consent(v).build()
-//                DB.saveLocal(edited) {}
+
                 DB.save(edited){
                     if (it.success) onSuccess() else onFailure()
                 }
@@ -73,18 +125,21 @@ class UserModel : ViewModel() {
     }
 
     fun getSleepPeriodCallBack(callback: ((periods: List<Period>) -> Unit)) {
-        val uid = Amplify.Auth?.currentUser?.userId ?: return
-        loadSleepTimes(uid){ workDays :DaysGroup, offDays:DaysGroup->
-            val possibleActivePeriods:ArrayList<Period> = arrayListOf()
-            val nowDayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) % 7
-            val yesterday = Calendar.getInstance().let { cal->
-                cal.time = Date(cal.timeInMillis - DAY_IN_MS)
-                cal.get(Calendar.DAY_OF_WEEK) % 7
-             }
-            getPossibleActivePeriods(workDays,offDays,nowDayOfWeek)?.let { it1 -> possibleActivePeriods.add(it1) }
-            getPossibleActivePeriods(workDays,offDays,yesterday)?.let { it1 -> possibleActivePeriods.add(it1) }
-            callback(possibleActivePeriods)
+        val wd = workDays.value
+        val od = offDays.value
+        if (wd == null || od==null) {
+            callback(arrayListOf())
+            return
         }
+        val possibleActivePeriods:ArrayList<Period> = arrayListOf()
+        val nowDayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) % 7
+        val yesterday = Calendar.getInstance().let { cal->
+            cal.time = Date(cal.timeInMillis - DAY_IN_MS)
+            cal.get(Calendar.DAY_OF_WEEK) % 7
+        }
+        getPossibleActivePeriods(wd,od,nowDayOfWeek)?.let { it1 -> possibleActivePeriods.add(it1) }
+        getPossibleActivePeriods(wd,od,yesterday)?.let { it1 -> possibleActivePeriods.add(it1) }
+        callback(possibleActivePeriods)
     }
 
     private fun getPossibleActivePeriods(workDaysGroup: DaysGroup , offDaysGroup: DaysGroup , day:Int):Period?{
@@ -111,28 +166,32 @@ class UserModel : ViewModel() {
     }
 
 
-    private fun loadSleepTimes(uid: String, onCompleteCallback: ((workDays:DaysGroup, offDays:DaysGroup) -> Unit)? = null) {
+
+    private fun loadUser(uid: String, onComplete: ()-> Unit) {
         DB.get(uid,User::class.java){
-            val u = it.data as User
+            val u = it.data as? User ?: return@get
             val offDaysGroup = createDaysGroup(u.offDay,GroupType.OFF_DAYS)
-            offDaysLivedata.postValue(offDaysGroup)
+            offDays.setValue(offDaysGroup)
 
             val workDaysGroup = createDaysGroup(u.workday,GroupType.WORK_DAYS)
-            workDaysLivedata.postValue(workDaysGroup)
+            workDays.setValue(workDaysGroup)
 
-            if (onCompleteCallback != null && workDaysGroup != null && offDaysGroup != null) {
-                onCompleteCallback(workDaysGroup,offDaysGroup)
-            }
+            surveyLastUpdated = u.surveyLastUpdate?.toDate()?.time ?: 0
+            surveyLastUpdated2 = u.surveyLastUpdate2?.time?.toDate()?.time ?: 0
+
+            surveyRetakePeriod = u.retakeSurveyPeriod
+
+            onComplete()
          }
     }
 
 
-    fun updateDayGroups(groups : Pair<DaysGroup,DaysGroup>){
+    fun updateDayGroups(groups : Pair<DaysGroup,DaysGroup>, onComplete: () -> Unit){
         val uid = Amplify.Auth?.currentUser?.userId ?: return
         val workDaysGroup:DaysGroup = groups.first
         val offDaysGroup: DaysGroup = groups.second
-        workDaysLivedata.postValue(workDaysGroup)
-        offDaysLivedata.postValue(offDaysGroup)
+        workDays.postValue(workDaysGroup)
+        offDays.postValue(offDaysGroup)
         DB.get(uid,User::class.java){
             val u = it.data as User
             val nu = u.copyOfBuilder()
@@ -146,8 +205,20 @@ class UserModel : ViewModel() {
                     .wakeUpTime(offDaysGroup.wakeTime.toString())
                     .days(offDaysGroup.daysNames)
                     .build())
-            DB.save(nu.build()){
+            DB.save(nu.build()){ res ->
+                val us = res.data as? User ?: return@save
+                val activePeriod = TrackerService.getActivePeriod()
+                if (activePeriod==null) {
+                    onComplete()
+                    return@save
+                }
+//                if (activePeriod.period.periodGroupType == GroupType.WORK_DAYS)
+//                    activePeriod.updatePeriodTimes(us.workday.sleepTime, us.workday.wakeUpTime)
+//                else if (activePeriod.period.periodGroupType == GroupType.OFF_DAYS)
+//                    activePeriod.updatePeriodTimes(us.offDay.sleepTime, us.offDay.wakeUpTime)
 
+
+                onComplete()
             }
         }
 
@@ -160,16 +231,4 @@ class UserModel : ViewModel() {
             ,type
             ,st,wt)
     }
-    private fun ethicMatcher(id:Int,context: Context):String?{
-            return when (id) {
-                R.id.african_ethnic -> context.getString(R.string.african)
-                R.id.white_ethnic ->context.getString(R.string.white)
-                R.id.mixed_ethnic ->context.getString(R.string.mixed)
-                R.id.asian_ethnic ->context.getString(R.string.asian)
-                R.id.caribbean_ethnic ->context.getString(R.string.caribbean)
-                R.id.other_ethnic ->context.getString(R.string.other_ethnic)
-                else -> null
-            }
-
-        }
 }

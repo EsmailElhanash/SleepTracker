@@ -18,7 +18,7 @@ val MONTHS_NAMES = arrayOf(
 
 )
 
-object DateFormatter {
+object IDFormatter {
     fun getID(ms:Long):String{
         val cal = Calendar.getInstance()
         cal.time = Date(ms)

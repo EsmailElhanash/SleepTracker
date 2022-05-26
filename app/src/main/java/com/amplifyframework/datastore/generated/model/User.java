@@ -33,13 +33,15 @@ public final class User implements Model {
   public static final QueryField WORKDAY = field("User", "workday");
   public static final QueryField SURVEY_LAST_UPDATE = field("User", "surveyLastUpdate");
   public static final QueryField SURVEY_LAST_UPDATE2 = field("User", "surveyLastUpdate2");
+  public static final QueryField RETAKE_SURVEY_PERIOD = field("User", "retakeSurveyPeriod");
   private final @ModelField(targetType="ID", isRequired = true) String id;
   private final @ModelField(targetType="String", isRequired = true) String sid;
   private final @ModelField(targetType="String") String consent;
   private final @ModelField(targetType="DayGroup", isRequired = true) DayGroup offDay;
   private final @ModelField(targetType="DayGroup", isRequired = true) DayGroup workday;
   private final @ModelField(targetType="AWSDateTime") Temporal.DateTime surveyLastUpdate;
-  private final @ModelField(targetType="AWSDateTime") Temporal.DateTime surveyLastUpdate2;
+  private final @ModelField(targetType="SurveyUpdateLastCase2") SurveyUpdateLastCase2 surveyLastUpdate2;
+  private final @ModelField(targetType="Int", isRequired = true) Integer retakeSurveyPeriod;
   private final @ModelField(targetType="SurveyEntry") @HasMany(associatedWith = "userSurveysId", type = SurveyEntry.class) List<SurveyEntry> surveys = null;
   private final @ModelField(targetType="TrackerPeriod") @HasMany(associatedWith = "userTrackerId", type = TrackerPeriod.class) List<TrackerPeriod> tracker = null;
   private @ModelField(targetType="AWSDateTime", isReadOnly = true) Temporal.DateTime createdAt;
@@ -68,8 +70,12 @@ public final class User implements Model {
       return surveyLastUpdate;
   }
   
-  public Temporal.DateTime getSurveyLastUpdate2() {
+  public SurveyUpdateLastCase2 getSurveyLastUpdate2() {
       return surveyLastUpdate2;
+  }
+  
+  public Integer getRetakeSurveyPeriod() {
+      return retakeSurveyPeriod;
   }
   
   public List<SurveyEntry> getSurveys() {
@@ -88,7 +94,7 @@ public final class User implements Model {
       return updatedAt;
   }
   
-  private User(String id, String sid, String consent, DayGroup offDay, DayGroup workday, Temporal.DateTime surveyLastUpdate, Temporal.DateTime surveyLastUpdate2) {
+  private User(String id, String sid, String consent, DayGroup offDay, DayGroup workday, Temporal.DateTime surveyLastUpdate, SurveyUpdateLastCase2 surveyLastUpdate2, Integer retakeSurveyPeriod) {
     this.id = id;
     this.sid = sid;
     this.consent = consent;
@@ -96,6 +102,7 @@ public final class User implements Model {
     this.workday = workday;
     this.surveyLastUpdate = surveyLastUpdate;
     this.surveyLastUpdate2 = surveyLastUpdate2;
+    this.retakeSurveyPeriod = retakeSurveyPeriod;
   }
   
   @Override
@@ -113,6 +120,7 @@ public final class User implements Model {
               ObjectsCompat.equals(getWorkday(), user.getWorkday()) &&
               ObjectsCompat.equals(getSurveyLastUpdate(), user.getSurveyLastUpdate()) &&
               ObjectsCompat.equals(getSurveyLastUpdate2(), user.getSurveyLastUpdate2()) &&
+              ObjectsCompat.equals(getRetakeSurveyPeriod(), user.getRetakeSurveyPeriod()) &&
               ObjectsCompat.equals(getCreatedAt(), user.getCreatedAt()) &&
               ObjectsCompat.equals(getUpdatedAt(), user.getUpdatedAt());
       }
@@ -128,6 +136,7 @@ public final class User implements Model {
       .append(getWorkday())
       .append(getSurveyLastUpdate())
       .append(getSurveyLastUpdate2())
+      .append(getRetakeSurveyPeriod())
       .append(getCreatedAt())
       .append(getUpdatedAt())
       .toString()
@@ -145,6 +154,7 @@ public final class User implements Model {
       .append("workday=" + String.valueOf(getWorkday()) + ", ")
       .append("surveyLastUpdate=" + String.valueOf(getSurveyLastUpdate()) + ", ")
       .append("surveyLastUpdate2=" + String.valueOf(getSurveyLastUpdate2()) + ", ")
+      .append("retakeSurveyPeriod=" + String.valueOf(getRetakeSurveyPeriod()) + ", ")
       .append("createdAt=" + String.valueOf(getCreatedAt()) + ", ")
       .append("updatedAt=" + String.valueOf(getUpdatedAt()))
       .append("}")
@@ -171,6 +181,7 @@ public final class User implements Model {
       null,
       null,
       null,
+      null,
       null
     );
   }
@@ -182,7 +193,8 @@ public final class User implements Model {
       offDay,
       workday,
       surveyLastUpdate,
-      surveyLastUpdate2);
+      surveyLastUpdate2,
+      retakeSurveyPeriod);
   }
   public interface SidStep {
     OffDayStep sid(String sid);
@@ -195,7 +207,12 @@ public final class User implements Model {
   
 
   public interface WorkdayStep {
-    BuildStep workday(DayGroup workday);
+    RetakeSurveyPeriodStep workday(DayGroup workday);
+  }
+  
+
+  public interface RetakeSurveyPeriodStep {
+    BuildStep retakeSurveyPeriod(Integer retakeSurveyPeriod);
   }
   
 
@@ -204,18 +221,19 @@ public final class User implements Model {
     BuildStep id(String id);
     BuildStep consent(String consent);
     BuildStep surveyLastUpdate(Temporal.DateTime surveyLastUpdate);
-    BuildStep surveyLastUpdate2(Temporal.DateTime surveyLastUpdate2);
+    BuildStep surveyLastUpdate2(SurveyUpdateLastCase2 surveyLastUpdate2);
   }
   
 
-  public static class Builder implements SidStep, OffDayStep, WorkdayStep, BuildStep {
+  public static class Builder implements SidStep, OffDayStep, WorkdayStep, RetakeSurveyPeriodStep, BuildStep {
     private String id;
     private String sid;
     private DayGroup offDay;
     private DayGroup workday;
+    private Integer retakeSurveyPeriod;
     private String consent;
     private Temporal.DateTime surveyLastUpdate;
-    private Temporal.DateTime surveyLastUpdate2;
+    private SurveyUpdateLastCase2 surveyLastUpdate2;
     @Override
      public User build() {
         String id = this.id != null ? this.id : UUID.randomUUID().toString();
@@ -227,7 +245,8 @@ public final class User implements Model {
           offDay,
           workday,
           surveyLastUpdate,
-          surveyLastUpdate2);
+          surveyLastUpdate2,
+          retakeSurveyPeriod);
     }
     
     @Override
@@ -245,9 +264,16 @@ public final class User implements Model {
     }
     
     @Override
-     public BuildStep workday(DayGroup workday) {
+     public RetakeSurveyPeriodStep workday(DayGroup workday) {
         Objects.requireNonNull(workday);
         this.workday = workday;
+        return this;
+    }
+    
+    @Override
+     public BuildStep retakeSurveyPeriod(Integer retakeSurveyPeriod) {
+        Objects.requireNonNull(retakeSurveyPeriod);
+        this.retakeSurveyPeriod = retakeSurveyPeriod;
         return this;
     }
     
@@ -264,7 +290,7 @@ public final class User implements Model {
     }
     
     @Override
-     public BuildStep surveyLastUpdate2(Temporal.DateTime surveyLastUpdate2) {
+     public BuildStep surveyLastUpdate2(SurveyUpdateLastCase2 surveyLastUpdate2) {
         this.surveyLastUpdate2 = surveyLastUpdate2;
         return this;
     }
@@ -281,11 +307,12 @@ public final class User implements Model {
   
 
   public final class CopyOfBuilder extends Builder {
-    private CopyOfBuilder(String id, String sid, String consent, DayGroup offDay, DayGroup workday, Temporal.DateTime surveyLastUpdate, Temporal.DateTime surveyLastUpdate2) {
+    private CopyOfBuilder(String id, String sid, String consent, DayGroup offDay, DayGroup workday, Temporal.DateTime surveyLastUpdate, SurveyUpdateLastCase2 surveyLastUpdate2, Integer retakeSurveyPeriod) {
       super.id(id);
       super.sid(sid)
         .offDay(offDay)
         .workday(workday)
+        .retakeSurveyPeriod(retakeSurveyPeriod)
         .consent(consent)
         .surveyLastUpdate(surveyLastUpdate)
         .surveyLastUpdate2(surveyLastUpdate2);
@@ -307,6 +334,11 @@ public final class User implements Model {
     }
     
     @Override
+     public CopyOfBuilder retakeSurveyPeriod(Integer retakeSurveyPeriod) {
+      return (CopyOfBuilder) super.retakeSurveyPeriod(retakeSurveyPeriod);
+    }
+    
+    @Override
      public CopyOfBuilder consent(String consent) {
       return (CopyOfBuilder) super.consent(consent);
     }
@@ -317,7 +349,7 @@ public final class User implements Model {
     }
     
     @Override
-     public CopyOfBuilder surveyLastUpdate2(Temporal.DateTime surveyLastUpdate2) {
+     public CopyOfBuilder surveyLastUpdate2(SurveyUpdateLastCase2 surveyLastUpdate2) {
       return (CopyOfBuilder) super.surveyLastUpdate2(surveyLastUpdate2);
     }
   }

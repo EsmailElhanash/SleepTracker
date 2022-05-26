@@ -11,15 +11,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.amplifyframework.core.Amplify
 import com.example.sleeptracker.R
-import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.databinding.ActivityLoginBinding
 import com.example.sleeptracker.ui.HomeActivity
 import com.example.sleeptracker.ui.MainActivity.Companion.TEST
-import com.example.sleeptracker.ui.survey.SurveyActivity
-import com.example.sleeptracker.utils.androidutils.DialogManager
-import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseOptions
-import com.google.firebase.ktx.Firebase
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -41,6 +35,7 @@ class LoginActivity : AppCompatActivity() {
         if (TEST) setTest()
         binding.loginButton.setOnClickListener {
             try {
+                showProgressIndicator()
                 Amplify.Auth.signIn(
                     binding.emailInputLogin.editText?.text.toString(),
                     binding.passwordInputLogin.editText?.text.toString(),
@@ -48,13 +43,16 @@ class LoginActivity : AppCompatActivity() {
                         if (result.isSignInComplete) {
                             val intent = Intent(this, HomeActivity::class.java)
                             startActivity(intent)
+                            finish()
                             Log.i("AuthQuickstart", "Sign in succeeded")
                         } else {
+                            hideProgressIndicator()
                             onFailure("Sign in not complete")
                             Log.i("AuthQuickstart", "Sign in not complete")
                         }
                     },
                     {
+                        hideProgressIndicator()
                         it.message?.let { it1 -> onFailure(it1) }
                     }
                 )
@@ -75,6 +73,22 @@ class LoginActivity : AppCompatActivity() {
                 Toast.LENGTH_LONG
             ).show()
         }
+    }
+
+    private fun hideProgressIndicator(){
+        runOnUiThread {
+            root.visibility = View.VISIBLE
+            myDialog?.dismiss()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        myDialog = null
+    }
+
+    private fun showProgressIndicator() {
+        root.visibility = View.GONE
     }
 
     fun showAlertMessage(errorText: String, context: Context) {

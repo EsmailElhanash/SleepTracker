@@ -59,6 +59,7 @@ class ConsentActivity : AppCompatActivity() {
             }
             .setPositiveButton(R.string.ok){ _, _->
                 val i = Intent(this, SurveyActivity::class.java)
+                i.putExtra(SurveyActivity.SURVEY_CASE_EXTRA,SurveyActivity.SURVEY_CASE_1)
                 startActivity(i)
             }
             .setCancelable(false)

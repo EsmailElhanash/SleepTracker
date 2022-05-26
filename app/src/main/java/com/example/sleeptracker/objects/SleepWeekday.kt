@@ -1,7 +1,7 @@
 package com.example.sleeptracker.objects
 
 enum class GroupType{
-    OFF_DAYS, WORK_DAYS, NO_TYPE;
+    OFF_DAYS, WORK_DAYS;
 
     companion object {
         fun fromString(type: String): GroupType? {

@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.amplifyframework.core.Amplify
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.androidservices.AlarmService
+import com.example.sleeptracker.background.androidservices.TrackerService
 import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.database.utils.DBParameters
 import com.example.sleeptracker.databinding.ActivitySettingsBinding
@@ -58,15 +59,22 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
             confirmLogout(this)
         }
 
-        observeDayGroups()
+
 
 
         binding.updateTimeButton.setOnClickListener {
             getWorkAndOffDaysGroups{
-                user.updateDayGroups(it)
-                startService(Intent(this,AlarmService::class.java))
+                user.updateDayGroups(it){
+                    startService(Intent(this,AlarmService::class.java))
+                }
+
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        observeDayGroups()
     }
     private fun showWorkDaysEditorDialog(context: Context){
         val view = LayoutInflater.from(context).inflate(R.layout.week_days_checkboxes, null, false)
@@ -106,8 +114,9 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
         myDialog.show()
         myDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
             getWorkAndOffDaysGroups(view){
-                user.updateDayGroups(it)
-                startService(Intent(this,AlarmService::class.java))
+                user.updateDayGroups(it){
+                    startService(Intent(this,AlarmService::class.java))
+                }
             }
             myDialog.dismiss()
         }
@@ -292,6 +301,7 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
                         val intent = Intent(context.applicationContext, LoginActivity::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         context.startActivity(intent)
+                        Amplify.DataStore.clear({},{})
                     },
                     {
                         it.localizedMessage?.let { it1 -> onFailure(it1) }

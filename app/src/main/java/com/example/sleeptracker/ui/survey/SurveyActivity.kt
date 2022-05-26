@@ -19,16 +19,22 @@ import androidx.core.view.setPadding
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.amplifyframework.core.Amplify
+import com.amplifyframework.core.model.temporal.Temporal
+import com.amplifyframework.datastore.generated.model.SurveyEntry
+import com.amplifyframework.datastore.generated.model.User
 import com.example.sleeptracker.R
-import com.example.sleeptracker.models.SurveysViewModel
+import com.example.sleeptracker.aws.DB
 import com.example.sleeptracker.databinding.ActivitySurveyBinding
 import com.example.sleeptracker.ui.HomeActivity
 import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.ui.survey.utils.PrepareQuestions
 import com.example.sleeptracker.ui.survey.utils.SurveyPage
 import com.example.sleeptracker.ui.survey.utils.SurveyQuestion
-import com.google.firebase.ktx.Firebase
+import com.example.sleeptracker.ui.survey.utils.getSurvey3Answers
+import com.example.sleeptracker.utils.time.DAY_IN_MS
 import kotlinx.coroutines.*
+import org.json.JSONObject
+import java.util.*
 
 const val anxiety1 = "<a href=\"https://www.youngminds.org.uk/young-person/mental-health-conditions/anxiety/#Treatinganxiety\">Treating Anxiety</a>"
 const val anxiety2 = "<a href=\"https://www.nhs.uk/mental-health/conditions/generalised-anxiety-disorder/self-help/\">Self Help</a>"
@@ -39,6 +45,7 @@ const val depression2 = "<a href=\"https://www.youngminds.org.uk/young-person/me
 const val depression3 = "<a href=\"https://www.nhs.uk/mental-health/feelings-symptoms-behaviours/feelings-and-symptoms/low-mood-sadness-depression/\">Low Mood Sadness Depression</a>"
 
 class SurveyActivity : AppCompatActivity() {
+    private var retakeSurveyPeriod: Int = 28
     private lateinit var binding: ActivitySurveyBinding
     private lateinit var root: View
     private lateinit var surveyPage1 : SurveyPage
@@ -47,11 +54,22 @@ class SurveyActivity : AppCompatActivity() {
     private lateinit var recyclerView : RecyclerView
     private var pageNum = 1
     private val pagesCount = 3
+
+    private var surveyCondition: Int? = null
+
+    companion object{
+        const val SURVEY_CASE_EXTRA = "SURVEY_CASE"
+        const val SURVEY_CASE_1 = 1
+        const val SURVEY_CASE_2 = 2
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySurveyBinding.inflate(layoutInflater)
         binding.surveyToolbar.setSubtitleTextColor(Color.WHITE)
         root = binding.root
+
+        surveyCondition = intent.getIntExtra(SURVEY_CASE_EXTRA,0)
 
         cancelNotification()
 
@@ -140,15 +158,17 @@ class SurveyActivity : AppCompatActivity() {
                     it.pickedAnswerValue = 0
                 }
             }
-            saveAnswers()
             checkScore()
+            saveAnswers()
         }
     }
 
     private fun checkScore() {
         val scoreGad = surveyPage1.getGadScore()
         val phqScore = surveyPage1.getPhqScore()
-
+        if (scoreGad != null && phqScore != null) {
+            if (scoreGad>=9 || phqScore >=9) retakeSurveyPeriod = 56
+        }
         var message1 = ""
         var message2 = ""
         val layout = LinearLayout(this).also {
@@ -230,18 +250,68 @@ class SurveyActivity : AppCompatActivity() {
     }
 
     private fun saveAnswers() {
-        val onFinish = {
-            dateUpdated = true
-            goHomeActivity()
-        }
-        Amplify.Auth?.currentUser?.userId?.let {
-            val message = "Saving answers"
-            SurveysViewModel()
-                .saveSurveyData(it, surveyPage1, surveyPage2, surveyPage3, onFinish)
+        val uid = DB.uid?:return
+        val message = "Saving answers"
+        Toast.makeText(applicationContext,message,Toast.LENGTH_LONG).show()
 
-            Toast.makeText(applicationContext,message,Toast.LENGTH_LONG).show()
+        val survey1 = JSONObject()
+        survey1.put("phq9Score" , surveyPage1.getPhqScore())
+        survey1.put("gad7Score" , surveyPage1.getGadScore())
+
+
+        val survey2 = JSONObject()
+//        val surveyMap : ArrayList<Map<String,String>> = getSurvey2Map(surveyPage2)
+        for (i in surveyPage2.surveyItems){
+            if (i is SurveyQuestion){
+                i.sentence?.let {
+                    val answer = JSONObject()
+                    answer.put("Answer" , i.answerText)
+                    answer.put("Score" , i.pickedAnswerValue)
+                    survey2.put(it,answer)
+                }
+            }
         }
+        survey2.put("Total Score",surveyPage2.getTotalScore())
+
+        val survey3 = JSONObject()
+        val data3 = getSurvey3Answers(surveyPage3)
+        data3.forEach{
+            survey3.put(it.key,it.value)
+        }
+        val nowMS = Calendar.getInstance().timeInMillis
+        val time = Temporal.DateTime(Date(nowMS),0)
+        val surveyEntry = SurveyEntry.builder()
+            .userId(uid)
+            .date(time)
+            .survey1(survey1.toString())
+            .survey2(survey2.toString())
+            .survey3(survey3.toString())
+            .id(time.toString())
+            .userSurveysId("Survey:$time-User:$uid")
+            .build()
+        DB.save(surveyEntry){}
+        saveDate(uid){}
     }
+
+    private fun saveDate(uid: String,onCompleteCallback: (() -> Unit)) {
+        val nowMS = Calendar.getInstance().timeInMillis
+
+        DB.get(uid, User::class.java){
+            val u = with((it.data as User).copyOfBuilder()){
+                when (surveyCondition) {
+                    SURVEY_CASE_1 -> surveyLastUpdate(Temporal.DateTime(Date(nowMS),0))
+                    else -> this
+                }.retakeSurveyPeriod(retakeSurveyPeriod)
+                    .build()
+            }
+            DB.save(u){
+                onCompleteCallback()
+            }
+        }
+
+    }
+
+
 
     private fun showInCompleteAnswersWarning(context: Context){
         AlertDialog.Builder(context)

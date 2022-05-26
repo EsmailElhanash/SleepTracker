@@ -1,15 +1,5 @@
 package com.example.sleeptracker.database.models
 
-import com.example.sleeptracker.database.utils.SnapshotExtractor
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import org.junit.Test
-
 class SleepPeriodLiveTest {
     val pid = "May 20, 2021"
 
