@@ -204,7 +204,7 @@ class TrackerService : Service(){
             Amplify.addPlugin(AWSDataStorePlugin())
             Amplify.addPlugin(AWSApiPlugin())
             Amplify.addPlugin(AWSCognitoAuthPlugin())
-            Amplify.configure(AmplifyConfiguration.fromConfigFile(this,R.raw.amplifyconfiguration),applicationContext)
+            Amplify.configure(AmplifyConfiguration.fromConfigFile(applicationContext,R.raw.amplifyconfiguration),applicationContext)
             onSuccess()
         }catch (e: AmplifyException){
             if (e is Amplify.AlreadyConfiguredException) {

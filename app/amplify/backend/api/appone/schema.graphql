@@ -3,15 +3,13 @@ type SubPeriod {
   MovementCount: Int!
 }
 
-type DeviceState{
+type DeviceState {
   Time: String!
   State: String!
 }
 
-
-type TrackerPeriod @model @auth(rules: [{allow: owner}]){
+type TrackerPeriod @model @auth(rules: [{allow: owner}]) {
   id: ID!
-  userId: String!
   WakeUpTime: String!
   SleepTime: String!
   ended: String
@@ -19,21 +17,22 @@ type TrackerPeriod @model @auth(rules: [{allow: owner}]){
   SleepDuration: String
   DurationInNumbers: String
   DisturbancesCount: String
-  SubPeriods:[SubPeriod]
+  SubPeriods: [SubPeriod]
   Sessions: [String]
   DeviceStates: [DeviceState]
   TotalMovements: Int
   AccelerometerLastReading: Float
   createdAt: AWSDateTime!
+  userID: ID! @index(name: "byUser")
 }
 
-type SurveyEntry @model @auth(rules: [{allow: owner}]){
+type SurveyEntry @model @auth(rules: [{allow: owner}]) {
   id: ID!
-  userId: String!
   date: AWSDateTime!
   survey1: AWSJSON!
   survey2: AWSJSON!
   survey3: AWSJSON!
+  userID: ID! @index(name: "byUser")
 }
 
 type DayGroup {
@@ -43,11 +42,11 @@ type DayGroup {
 }
 
 type SurveyUpdateLastCase2 {
-    time: AWSDateTime!
-    took_survey: String!
+  time: AWSDateTime!
+  took_survey: String!
 }
 
-type User @model @auth(rules: [{allow: owner}]){
+type User @model @auth(rules: [{allow: owner}]) {
   id: ID!
   sid: String!
   consent: String
@@ -56,7 +55,7 @@ type User @model @auth(rules: [{allow: owner}]){
   surveyLastUpdate: AWSDateTime
   surveyLastUpdate2: SurveyUpdateLastCase2
   retakeSurveyPeriod: Int!
-  surveys: [SurveyEntry] @hasMany
-  tracker: [TrackerPeriod] @hasMany
+  surveys: [SurveyEntry] @hasMany(indexName: "byUser", fields: ["id"])
+  tracker: [TrackerPeriod] @hasMany(indexName: "byUser", fields: ["id"])
 }
  

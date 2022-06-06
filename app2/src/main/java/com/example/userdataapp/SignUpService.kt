@@ -110,7 +110,7 @@ class SignUpService : Service() {
         try{
             Amplify.addPlugin(AWSApiPlugin())
             Amplify.addPlugin(AWSCognitoAuthPlugin())
-            Amplify.configure(AmplifyConfiguration.fromConfigFile(this, R.raw.amplifyconfiguration2),this)
+            Amplify.configure(AmplifyConfiguration.fromConfigFile(applicationContext, R.raw.amplifyconfiguration2),applicationContext)
             Log.d("configureAws", "succ")
             onSuccess()
         }catch (e: AmplifyException){

@@ -1,26 +1,29 @@
 package com.example.sleeptracker.aws
 
+import android.util.Log
 import com.amplifyframework.core.Amplify
 import com.amplifyframework.core.model.Model
 import com.amplifyframework.core.model.query.QuerySortBy
 import com.amplifyframework.core.model.query.QuerySortOrder
 import com.amplifyframework.core.model.query.Where
 import com.amplifyframework.core.model.query.predicate.QueryPredicate
-import com.amplifyframework.kotlin.datastore.DataStore
 
 object DB {
-
+    private const val TAG = "DBOBJECT"
     data class Response (val success:Boolean, val data:Model?, val error:String?)
     data class PredicateResponse (val success:Boolean, val data:List<Model>?, val error:String?)
 
-    @Synchronized
+
     fun get(id:String, c: Class<out Model>, onComplete:(res:Response) -> Unit){
+        Log.d(TAG, "get:")
         Amplify.DataStore.query(
             c, Where.id(id),
             {
+                Log.d(TAG, "get: ${it.next()}")
                 onComplete(Response(true,it.next(),null))
             },
             {
+                Log.d(TAG, "get: $it")
                 it.localizedMessage?.let { it1 -> onComplete(Response(false,null,it1)) }
                 re()
             }

@@ -10,7 +10,10 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.amplifyframework.core.Amplify
+import com.amplifyframework.datastore.generated.model.User
 import com.example.sleeptracker.R
+import com.example.sleeptracker.aws.DB
+import com.example.sleeptracker.aws.DB.uid
 import com.example.sleeptracker.databinding.ActivityLoginBinding
 import com.example.sleeptracker.ui.HomeActivity
 import com.example.sleeptracker.ui.MainActivity.Companion.TEST

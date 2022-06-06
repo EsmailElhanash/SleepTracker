@@ -21,6 +21,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SleepTracker"
+        android:name=".App"
         tools:ignore="AllowBackup">
 
         <service
