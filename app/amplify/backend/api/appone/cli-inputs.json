@@ -3,14 +3,19 @@
   "serviceConfiguration": {
     "apiName": "appone",
     "serviceName": "AppSync",
-    "gqlSchemaPath": "/home/esmail/AndroidProjects/SleepTracker/app/amplify/backend/api/appone/schema.graphql",
+    "gqlSchemaPath": "/tmp/amplify-246a84b0-af55-4cc3-a67c-23b0b6a19b78/amplify/backend/api/appone/schema.graphql",
     "defaultAuthType": {
-      "mode": "AMAZON_COGNITO_USER_POOLS",
-      "cognitoUserPoolId": "authappone"
+      "mode": "API_KEY",
+      "keyDescription": "api key description",
+      "expirationTime": 30
     },
     "additionalAuthTypes": [
       {
         "mode": "AWS_IAM"
+      },
+      {
+        "mode": "AMAZON_COGNITO_USER_POOLS",
+        "cognitoUserPoolId": "authappone"
       }
     ],
     "conflictResolution": {

@@ -16,6 +16,7 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.amplifyframework.core.Amplify
 import com.amplifyframework.core.Amplify.DataStore
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.androidservices.AlarmService
@@ -65,41 +66,35 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        startNow()
-    }
+        checkLastSurvey()
+        Intent(applicationContext, AlarmService::class.java).also {
+            startService(it)
+        }
+        Intent(applicationContext, SurveyService::class.java).also {
+            startService(it)
+        }
 
-    private fun startNow() {
-        runOnUiThread {
-            checkLastSurvey()
-            Intent(applicationContext, AlarmService::class.java).also {
-                    startService(it)
+        user.offDays.observe(this){
+            it ?: return@observe
+            binding.sleepWakeTimesView.offDaysNames.apply {
+                this.visibility = View.VISIBLE
+                this.text = it.daysNames.toString()
             }
-            Intent(applicationContext, SurveyService::class.java).also {
-                startService(it)
+            val st = DBParameters.SLEEP_TIME + ": " +it.sleepTime.toString()
+            binding.sleepWakeTimesView.offDaySleepTimeText.text = st
+            val wt = DBParameters.WAKEUP_TIME + ": " +it.wakeTime.toString()
+            binding.sleepWakeTimesView.offDayWakeTimeText.text = wt
+        }
+        user.workDays.observe(this){
+            it ?: return@observe
+            binding.sleepWakeTimesView.workDaysNames.apply {
+                this.visibility = View.VISIBLE
+                this.text = it.daysNames.toString()
             }
-
-            user.offDays.observe(this){
-                it ?: return@observe
-                binding.sleepWakeTimesView.offDaysNames.apply {
-                    this.visibility = View.VISIBLE
-                    this.text = it.daysNames.toString()
-                }
-                val st = DBParameters.SLEEP_TIME + ": " +it.sleepTime.toString()
-                binding.sleepWakeTimesView.offDaySleepTimeText.text = st
-                val wt = DBParameters.WAKEUP_TIME + ": " +it.wakeTime.toString()
-                binding.sleepWakeTimesView.offDayWakeTimeText.text = wt
-            }
-            user.workDays.observe(this){
-                it ?: return@observe
-                binding.sleepWakeTimesView.workDaysNames.apply {
-                    this.visibility = View.VISIBLE
-                    this.text = it.daysNames.toString()
-                }
-                val st = DBParameters.SLEEP_TIME + ": " +it.sleepTime.toString()
-                binding.sleepWakeTimesView.workdaySleepTimeText.text = st
-                val wt = DBParameters.WAKEUP_TIME + ": " + it.wakeTime.toString()
-                binding.sleepWakeTimesView.workDayWakeTimeText.text = wt
-            }
+            val st = DBParameters.SLEEP_TIME + ": " +it.sleepTime.toString()
+            binding.sleepWakeTimesView.workdaySleepTimeText.text = st
+            val wt = DBParameters.WAKEUP_TIME + ": " + it.wakeTime.toString()
+            binding.sleepWakeTimesView.workDayWakeTimeText.text = wt
         }
     }
 
