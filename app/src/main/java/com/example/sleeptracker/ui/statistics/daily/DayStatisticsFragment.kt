@@ -30,11 +30,11 @@ class DayStatisticsFragment(private val period: TrackerPeriod) : Fragment() {
 
 
     private fun displayData() {
-        val stepCount = period?.totalMovements
+        val stepCount = period.totalMovements
         binding.stepsCount.text = getStepsText(stepCount)
 
-        val sleepTime = period?.sleepTime
-        val wakeTime = period?.ended
+        val sleepTime = period.actualSleepTime
+        val wakeTime = period.actualWakeUpTime
 
         val wakeUpTimeText = wakeTime?.toString()
         val sleepUpTimeText = sleepTime?.toString()

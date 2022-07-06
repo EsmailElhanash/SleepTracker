@@ -8,16 +8,21 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
-import android.widget.Toast
+import android.util.Log
+import androidx.core.content.ContextCompat
 import com.amplifyframework.AmplifyException
 import com.amplifyframework.api.aws.AWSApiPlugin
 import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin
 import com.amplifyframework.core.Amplify
 import com.amplifyframework.core.AmplifyConfiguration
 import com.amplifyframework.datastore.AWSDataStorePlugin
+import com.amplifyframework.datastore.DataStoreConfiguration
 import com.example.sleeptracker.R
+import com.example.sleeptracker.aws.AWS
+import com.example.sleeptracker.aws.initAws
 import com.example.sleeptracker.background.MySensorsManager
 import com.example.sleeptracker.background.receivers.StateReceiver
 import com.example.sleeptracker.models.SleepPeriod
@@ -27,9 +32,8 @@ import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.ui.statistics.daily.HOUR_IN_MS
 import com.example.sleeptracker.utils.androidutils.NotificationType
 import com.example.sleeptracker.utils.androidutils.NotificationsManager
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 
 private const val NOTIFICATION_ID = 1213
@@ -41,7 +45,10 @@ class TrackerService : Service(){
     private var foreGroundNotification: Notification? = null
     private var sensorsManager: MySensorsManager? = null
 
+    private lateinit var user: UserModel
+
     companion object{
+        private const val TAG = "TrackerService"
         private var tracking : Boolean = false
         private var activePeriod: SleepPeriod? = null
         fun getActivePeriod(): SleepPeriod? {
@@ -52,7 +59,10 @@ class TrackerService : Service(){
 
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        configureAWS { checkPeriod() }
+        initAws {
+            user = UserModel()
+            checkPeriod()
+        }
 
         return START_STICKY
     }
@@ -61,10 +71,12 @@ class TrackerService : Service(){
     private fun checkPeriod(){
         if (!tracking) startForegroundPeriodCheck()
         var inPeriod = false
-        UserModel.user.getSleepPeriodCallBack { periods ->
+        user.getSleepPeriodCallBack { periods ->
             periods.forEach {
                 if (Calendar.getInstance().timeInMillis in it.periodStartMS .. it.periodEndMS){
-                    if (!tracking) startTracking(it)
+                    Log.d("TrackerService", "checkPeriod: Active period:${it.getBasicID()}")
+                    if (!tracking)
+                        startTracking(it)
                     inPeriod = true
                     return@forEach
                 }
@@ -77,7 +89,11 @@ class TrackerService : Service(){
     @SuppressLint("UnspecifiedImmutableFlag")
     private fun startForegroundPeriodCheck(){
         val pendingIntent: PendingIntent = Intent(this, MainActivity::class.java).let { notificationIntent ->
-            PendingIntent.getService(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.getService(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+            } else {
+                PendingIntent.getService(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+            }
         }
         foreGroundNotification = NotificationsManager.createNotification(
             pendingIntent,
@@ -90,11 +106,15 @@ class TrackerService : Service(){
         )
     }
 
-    @SuppressLint("UnspecifiedImmutableFlag")
+
     private fun startForegroundTracking(){
         val pendingIntent: PendingIntent =
             Intent(this, MainActivity::class.java).let { notificationIntent ->
-                PendingIntent.getService(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    PendingIntent.getService(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+                } else {
+                    PendingIntent.getService(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+                }
             }
         foreGroundNotification = NotificationsManager.createNotification(
             pendingIntent,
@@ -109,9 +129,11 @@ class TrackerService : Service(){
 
     @Synchronized
     private fun startTracking(period: Period){
+        Log.d(TAG, "startTracking:${period.getBasicID()}")
         startForegroundTracking()
         tracking = true
-        activePeriod = SleepPeriod(period)
+
+        activePeriod = SleepPeriod(period,getState())
 
         val periodLength = period.periodEndMS - period.periodStartMS + 2 * HOUR_IN_MS
         wakeLockPeriod = periodLength
@@ -136,6 +158,16 @@ class TrackerService : Service(){
         }
     }
 
+    private fun getState():String {
+        val pm = getSystemService(POWER_SERVICE) as PowerManager?
+        val isOn = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+            pm?.isInteractive ?: false
+        } else {
+            pm?.isScreenOn ?: false
+        }
+        return if (isOn) "User present" else "off"
+    }
+
     private fun setWakeLock(context: Context, wakeLockPeriod:Long){
         wakeLock = (context.getSystemService(Context.POWER_SERVICE) as PowerManager).run {
             newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::MyWakelockTag").apply {
@@ -153,36 +185,39 @@ class TrackerService : Service(){
 
     @Synchronized
     private fun stopTracking(){
-        if (activePeriod==null) {
-            stopForeground()
-            return
-        }
+        synchronized(this){
+            Log.d(TAG, "stopTracking:${activePeriod?.period?.getBasicID()}")
+            if (activePeriod==null) {
+                stopForeground()
+                return
+            }
 
-        try {
-            unregisterReceiver(stateReceiver)
-        }catch (e: Exception){}
+            try {
+                unregisterReceiver(stateReceiver)
+            }catch (e: Exception){}
 
-        val uid = Amplify.Auth.currentUser?.userId
-        val pid = activePeriod?.id
-        if (pid != null && uid != null) {
-            activePeriod?.saveState("User present")
-        }
+            val uid = Amplify.Auth.currentUser?.userId
+            val pid = activePeriod?.pid
+            if (pid != null && uid != null) {
+                activePeriod?.saveState("User present")
+            }
 
-        releaseWakeLock()
-        sensorsManager?.unRegisterSensors(applicationContext)
-        activePeriod?.saveEndTime{
-            activePeriod?.calculateSleepDuration{
-                activePeriod?.calculateSessions{
-                    activePeriod?.calculateAverageMovementCount{
-                        activePeriod?.savePeriod()
-                        activePeriod = null
-                        tracking = false
-                        stopForeground()
-                        stopSelf()
+            releaseWakeLock()
+            sensorsManager?.unRegisterSensors(applicationContext)
+            activePeriod?.calculateSessions{
+                activePeriod?.calculateSleepDuration(it) {
+                    activePeriod?.calculateAverageMovementCount {
+                        activePeriod?.forceSave{
+                            activePeriod = null
+                            tracking = false
+                            stopForeground()
+                            stopSelf()
+                        }
                     }
                 }
             }
         }
+
     }
 
     private fun stopForeground(){
@@ -197,21 +232,5 @@ class TrackerService : Service(){
 
     override fun onBind(p0: Intent?): IBinder? {
         return null
-    }
-
-    private fun configureAWS(onSuccess : ()->Unit){
-        try{
-            Amplify.addPlugin(AWSDataStorePlugin())
-            Amplify.addPlugin(AWSApiPlugin())
-            Amplify.addPlugin(AWSCognitoAuthPlugin())
-            Amplify.configure(AmplifyConfiguration.fromConfigFile(applicationContext,R.raw.amplifyconfiguration),applicationContext)
-            onSuccess()
-        }catch (e: AmplifyException){
-            if (e is Amplify.AlreadyConfiguredException) {
-                onSuccess()
-                return
-            }
-            Toast.makeText(this,"Error Occurred" , Toast.LENGTH_SHORT).show()
-        }
     }
 }

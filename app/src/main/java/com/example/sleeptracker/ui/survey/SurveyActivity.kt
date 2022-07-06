@@ -4,9 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.text.Html
 import android.text.method.LinkMovementMethod
-import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -18,21 +16,17 @@ import androidx.core.text.HtmlCompat
 import androidx.core.view.setPadding
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.amplifyframework.core.Amplify
 import com.amplifyframework.core.model.temporal.Temporal
 import com.amplifyframework.datastore.generated.model.SurveyEntry
 import com.amplifyframework.datastore.generated.model.User
 import com.example.sleeptracker.R
-import com.example.sleeptracker.aws.DB
+import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.databinding.ActivitySurveyBinding
-import com.example.sleeptracker.ui.HomeActivity
 import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.ui.survey.utils.PrepareQuestions
 import com.example.sleeptracker.ui.survey.utils.SurveyPage
 import com.example.sleeptracker.ui.survey.utils.SurveyQuestion
 import com.example.sleeptracker.ui.survey.utils.getSurvey3Answers
-import com.example.sleeptracker.utils.time.DAY_IN_MS
-import kotlinx.coroutines.*
 import org.json.JSONObject
 import java.util.*
 
@@ -158,8 +152,8 @@ class SurveyActivity : AppCompatActivity() {
                     it.pickedAnswerValue = 0
                 }
             }
-            checkScore()
             saveAnswers()
+            checkScore()
         }
     }
 
@@ -250,7 +244,7 @@ class SurveyActivity : AppCompatActivity() {
     }
 
     private fun saveAnswers() {
-        val uid = DB.uid?:return
+        val uid = AWS.uid?:return
         val message = "Saving answers"
         Toast.makeText(applicationContext,message,Toast.LENGTH_LONG).show()
 
@@ -281,22 +275,21 @@ class SurveyActivity : AppCompatActivity() {
         val nowMS = Calendar.getInstance().timeInMillis
         val time = Temporal.DateTime(Date(nowMS),0)
         val surveyEntry = SurveyEntry.builder()
-            .userId(uid)
             .date(time)
             .survey1(survey1.toString())
             .survey2(survey2.toString())
             .survey3(survey3.toString())
-            .id(time.toString())
-            .userSurveysId("Survey:$time-User:$uid")
+            .userId(uid)
+            .id("Survey:$time-User:$uid")
             .build()
-        DB.save(surveyEntry){}
+        AWS.save(surveyEntry){}
         saveDate(uid){}
     }
 
     private fun saveDate(uid: String,onCompleteCallback: (() -> Unit)) {
         val nowMS = Calendar.getInstance().timeInMillis
 
-        DB.get(uid, User::class.java){
+        AWS.get(uid, User::class.java){
             val u = with((it.data as User).copyOfBuilder()){
                 when (surveyCondition) {
                     SURVEY_CASE_1 -> surveyLastUpdate(Temporal.DateTime(Date(nowMS),0))
@@ -304,7 +297,7 @@ class SurveyActivity : AppCompatActivity() {
                 }.retakeSurveyPeriod(retakeSurveyPeriod)
                     .build()
             }
-            DB.save(u){
+            AWS.save(u){
                 onCompleteCallback()
             }
         }

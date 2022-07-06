@@ -36,8 +36,7 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHomeBinding
     private lateinit var root : View
-    private val user : UserModel by viewModels()
-
+    val user : UserModel by viewModels()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,6 +47,13 @@ class HomeActivity : AppCompatActivity() {
         setSupportActionBar(binding.toolBarHomeActivity)
 
 
+
+        Intent(applicationContext, AlarmService::class.java).also {
+            startService(it)
+        }
+        Intent(applicationContext, SurveyService::class.java).also {
+            startService(it)
+        }
 
 
 
@@ -66,14 +72,6 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        checkLastSurvey()
-        Intent(applicationContext, AlarmService::class.java).also {
-            startService(it)
-        }
-        Intent(applicationContext, SurveyService::class.java).also {
-            startService(it)
-        }
-
         user.offDays.observe(this){
             it ?: return@observe
             binding.sleepWakeTimesView.offDaysNames.apply {
@@ -96,6 +94,7 @@ class HomeActivity : AppCompatActivity() {
             val wt = DBParameters.WAKEUP_TIME + ": " + it.wakeTime.toString()
             binding.sleepWakeTimesView.workDayWakeTimeText.text = wt
         }
+        checkLastSurvey(user)
     }
 
 
@@ -148,7 +147,7 @@ class HomeActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    private fun checkLastSurvey(){
+    private fun checkLastSurvey(user:UserModel){
         val nowMS = Calendar.getInstance().timeInMillis
         UserModel().getSurveyLastUpdatedCaseOne{
             user.getSurveyRetakePeriod { retakePeriod ->

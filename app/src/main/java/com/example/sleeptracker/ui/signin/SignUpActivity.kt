@@ -22,13 +22,14 @@ import com.amplifyframework.core.Amplify
 import com.amplifyframework.datastore.generated.model.DayGroup
 import com.amplifyframework.datastore.generated.model.User
 import com.example.sleeptracker.R
-import com.example.sleeptracker.aws.DB
+import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.databinding.ActivitySignUpBinding
 import com.example.sleeptracker.objects.DaysGroup
 import com.example.sleeptracker.objects.GroupType
 import com.example.sleeptracker.objects.TimePoint
 import com.example.sleeptracker.ui.ConsentActivity
+import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.ui.MainActivity.Companion.TEST
 import com.example.sleeptracker.ui.TimePickerFragment
 import com.example.sleeptracker.utils.androidutils.InputValidator
@@ -42,11 +43,6 @@ import kotlin.collections.HashMap
 
 class SignUpActivity : AppCompatActivity()
         , TimePickerListener {
-
-
-    companion object {
-        const val c = 116
-    }
 
     private lateinit var binding: ActivitySignUpBinding
     private var workDaySleepTime: TimePoint? = null
@@ -115,7 +111,7 @@ class SignUpActivity : AppCompatActivity()
         binding.ethnicGroups.ethnicRadioGroup.check(R.id.asian_ethnic)
         binding.nameInput.editText?.setText("eeee0000")
         binding.ageInput.editText?.setText("22")
-        binding.emailInput.editText?.setText("esmailelhanash${c}@gmail.com")
+        binding.emailInput.editText?.setText("esmailelhanash${MainActivity.c}@gmail.com")
         binding.genderPicker.setSelection(1)
         binding.passwordInput.editText?.setText("eeee1111")
         binding.passwordConfirmInput.editText?.setText("eeee1111")
@@ -176,11 +172,11 @@ class SignUpActivity : AppCompatActivity()
                     onFailure(it1.toString())
                     return@lit
                 }
-                id1 = id
                 onSidReady(id)
 
                 Amplify.Auth.signIn(email,pw, {
                     if (it.isSignInComplete) {
+                        id1 = id
                         createUser()
                     }
                 },
@@ -234,9 +230,10 @@ class SignUpActivity : AppCompatActivity()
                 .offDay(offDays)
                 .workday(workDays)
                 .retakeSurveyPeriod(28)
+                .id(id1)
                 .build()
 
-            DB.save(u){
+            AWS.save(u){
                 if (it.success){
                     runOnUiThread {
                         user.init()

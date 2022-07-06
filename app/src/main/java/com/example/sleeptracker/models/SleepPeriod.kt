@@ -1,129 +1,188 @@
 package com.example.sleeptracker.models
 
+import android.content.Context
+import android.os.PowerManager
+import androidx.core.content.ContextCompat.getSystemService
+import com.amplifyframework.core.model.Model
+import com.amplifyframework.core.model.query.Where
 import com.amplifyframework.core.model.temporal.Temporal
 import com.amplifyframework.datastore.generated.model.DeviceState
+import com.amplifyframework.datastore.generated.model.Session
 import com.amplifyframework.datastore.generated.model.SubPeriod
 import com.amplifyframework.datastore.generated.model.TrackerPeriod
-import com.example.sleeptracker.aws.DB
+import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.objects.Period
 import com.example.sleeptracker.utils.MINUTE_IN_MS
 import com.example.sleeptracker.utils.time.TimeUtil
+import kotlinx.coroutines.*
 import java.util.*
 
 
-class SleepPeriod(var period: Period) {
-    val id = period.getPeriodID()
-    val pid = "$id-${DB.uid}"
+class SleepPeriod(var period: Period, private val initState : String) {
+    val pid = "${period.getPeriodID()}- UserID:${AWS.uid}"
+
 
     private var trackerPeriod: TrackerPeriod = TrackerPeriod
         .builder()
-        .userId(DB.uid)
         .wakeUpTime(period.getEndTime())
         .sleepTime(period.getStartTime())
         .createdAt(Temporal.DateTime(Date(Calendar.getInstance().timeInMillis),0))
+        .userId(AWS.uid)
         .id(pid)
-        .subPeriods(mutableListOf())
-        .deviceStates(mutableListOf())
-        .userTrackerId(pid)
         .build()
 
+    private var pendingSaveModels = mutableListOf<Model>()
+    private var pendingSaveSubPeriods =  mutableMapOf<String,SubPeriod>()
 
     private val sortedStates : SortedMap<Long,String> = sortedMapOf()
 
 
     init {
+        CoroutineScope(Dispatchers.IO).launch {
+            saveLoop()
+            saveLoopSubPeriod()
+        }
         loadPeriod{
-            savePeriod()
+             saveState(initState)
         }
     }
     fun loadPeriod(onCompleteCallback: () -> Unit) {
-        DB.get(pid,TrackerPeriod::class.java){
+        AWS.get(pid,TrackerPeriod::class.java){
             val p = it.data as? TrackerPeriod
-            if (p!=null) {
-                trackerPeriod = p
-                trackerPeriod = trackerPeriod.copyOfBuilder()
-                    .deviceStates(mutableListOf())
-                    .subPeriods(mutableListOf())
-                    .build()
-                trackerPeriod.deviceStates.addAll(p.deviceStates)
-                trackerPeriod.subPeriods.addAll(p.subPeriods)
-            }
+            if (p!=null) trackerPeriod = p
+
             onCompleteCallback()
         }
     }
 
-//    fun updatePeriodTimes(sleepTime: String, wakeTime: String){
-//        trackerPeriod = with(trackerPeriod.copyOfBuilder()) {
-//            sleepTime(sleepTime)
-//            wakeUpTime(wakeTime)
-//            build()
-//        }
-//        UserModel().getSleepPeriodCallBack { periods ->
-//            periods.forEach {
-//                if (Calendar.getInstance().timeInMillis in it.periodStartMS .. it.periodEndMS){
-//                    val gt = period.periodGroupType
-//                    period = it
-//                    period.periodGroupType = gt
-//                    return@forEach
-//                }
-//            }
-//        }
-//        savePeriod()
-//    }
 
-    @Synchronized
-    fun savePeriod() {
-        DB.save(trackerPeriod){
+    private val saveEvery = 30000L
+    private var newData = false
+    private var newSubPeriodData = false
 
+
+
+    private suspend fun saveLoop(){
+        CoroutineScope(Dispatchers.IO).launch{
+            while (true){
+                if (newData){
+                    AWS.save(trackerPeriod){}
+                    val pendingSaveCopy = mutableListOf<Model>()
+                    pendingSaveCopy.addAll(pendingSaveModels)
+                    pendingSaveCopy.forEach { model ->
+                        // todo test all data are saved, do miss i.e same indices in both lists orig and copy
+                        AWS.save(model){}
+                        delay(500)
+                    }
+                    pendingSaveModels = mutableListOf()
+                    newData = false
+                }
+                delay(saveEvery)
+            }
         }
     }
 
-    fun saveEndTime(onComplete: () -> Unit?) {
-        val now = Calendar.getInstance().timeInMillis
-        trackerPeriod = trackerPeriod.copyOfBuilder()
-            .ended(TimeUtil.formatTimeMS(now))
-            .build()
-        onComplete()
+    fun forceSave(onCompleteCallback: ()->Unit){
+        forceSaveSubPeriod {
+            CoroutineScope(Dispatchers.IO).launch {
+                AWS.save(trackerPeriod) {}
+                val pendingSaveCopy = mutableListOf<Model>()
+                pendingSaveCopy.addAll(pendingSaveModels)
+                pendingSaveCopy.forEach {  model ->
+                    AWS.save(model) {}
+                    delay(500)
+                }
+                pendingSaveModels = mutableListOf()
+                newData = false
+                delay(3000)
+                onCompleteCallback()
+            }
+        }
+    }
+
+
+    private suspend fun saveLoopSubPeriod(){
+        CoroutineScope(Dispatchers.IO).launch{
+            while (true){
+                if (newSubPeriodData){
+                    val pendingSaveCopy = mutableListOf<SubPeriod>()
+                    pendingSaveCopy.addAll(pendingSaveSubPeriods.values)
+                    pendingSaveCopy.forEach { subPeriod ->
+                        // todo test all data are saved, do miss i.e same indices in both lists orig and copy
+                        AWS.save(subPeriod){}
+                        delay(500)
+                    }
+                    newSubPeriodData = false
+                }
+                delay(saveEvery)
+            }
+        }
+    }
+
+    private fun forceSaveSubPeriod(onCompleteCallback: ()->Unit){
+        CoroutineScope(Dispatchers.IO).launch{
+            if (newSubPeriodData){
+                val pendingSaveCopy = mutableListOf<SubPeriod>()
+                pendingSaveCopy.addAll(pendingSaveSubPeriods.values)
+                pendingSaveCopy.forEachIndexed { _, subPeriod ->
+                    // todo test all data are saved, do miss i.e same indices in both lists orig and copy
+                    AWS.save(subPeriod){}
+                    delay(500)
+                }
+                pendingSaveSubPeriods = mutableMapOf()
+                newSubPeriodData = false
+            }
+            delay(3000)
+            onCompleteCallback()
+        }
+    }
+
+    private fun savePeriod() {
+        newData = true
+    }
+
+    private fun saveSubPeriod() {
+        newSubPeriodData = true
     }
 
     fun saveAccelerometerReading(reading: Double){
         trackerPeriod =
             trackerPeriod.copyOfBuilder().accelerometerLastReading(reading).build()
+
         savePeriod()
     }
 
-    private fun getSubPeriodWithTime(time:String): SubPeriod? {
-        return trackerPeriod.subPeriods.stream().filter {
-            time == it.range
-        }.findFirst().orElse(null)
-
-    }
-
     fun saveStepTime(){
+        // todo test it
         val nowMS = Calendar.getInstance().timeInMillis
         period.periodPortions.forEach { sp ->
             if (nowMS in sp.periodStartMS..sp.periodEndMS) {
-                val id = sp.getMinuteRangePeriodID()
-                val currentValue = getSubPeriodWithTime(id)
-                if (currentValue==null) {
-                    val newSubPeriod = SubPeriod.builder()
-                        .range(id)
-                        .movementCount(1)
-                        .build()
-                    trackerPeriod.subPeriods.add(newSubPeriod)
+                val subPid = "${sp.getPeriodID()} - pid:$pid"
+                var subPeriod = pendingSaveSubPeriods[sp.getPeriodID()]
 
-                }
-                else {
-                    val newValue = currentValue.copyOfBuilder()
-                        .movementCount(currentValue.movementCount+1)
+                subPeriod = if (subPeriod!=null)
+                    subPeriod.copyOfBuilder()
+                        .movementCount(subPeriod.movementCount + 1)
                         .build()
-                    trackerPeriod.subPeriods.remove(currentValue)
-                    trackerPeriod.subPeriods.add(newValue)
-                }
-                savePeriod()
+                else SubPeriod
+                    .builder()
+                    .range(sp.getMinuteRangePeriodID())
+                    .movementCount(1)
+                    .trackerperiodId(pid)
+                    .id(subPid)
+                    .build()
+
+                pendingSaveSubPeriods[sp.getPeriodID()] = subPeriod
+
+                saveSubPeriod()
             }
         }
 
+        val currentCount = trackerPeriod.totalMovements ?: 0
+        trackerPeriod = trackerPeriod.copyOfBuilder()
+            .totalMovements(currentCount+1)
+            .build()
+        savePeriod()
 
     }
 
@@ -133,54 +192,40 @@ class SleepPeriod(var period: Period) {
             .builder()
             .time(now)
             .state(state)
+            .trackerperiodId(pid)
+            .id("$state--$now--$pid")
             .build()
-        trackerPeriod.deviceStates.add(ds)
+        pendingSaveModels.add(ds)
         savePeriod()
+
     }
 
-    fun calculateSleepDuration(onCompleteCallback: ()->Unit) {
-        val p = period
-        val startCalculations = { sortedStates : SortedMap<Long,String> ->
-            val longestPeriod = getLongestPeriod(sortedStates)
-            val durationString = getSleepingDuration(longestPeriod)
-            val duration2 = getSleepingDurationInNumbers(longestPeriod)
-
-            trackerPeriod = trackerPeriod.copyOfBuilder()
-                .sleepDuration(durationString)
-                .durationInNumbers(duration2)
-                .build()
+    fun calculateSleepDuration(sessions : HashMap<Long,Period> ,onCompleteCallback: ()->Unit) {
+        val longestPeriod = getLongestPeriod(sessions,sortedStates)
+        if (longestPeriod==null) {
             onCompleteCallback()
+            return
         }
-        //we calculate Sleep Duration using device states
-        setSortedStates(p){
-            val finalMap : SortedMap<Long,String> = sortedMapOf()
-//            finalMap[p.periodStartMS] = "off"
-            for (i in it){
-                if (i.key<p.periodStartMS) continue
-                if (i.value == "on") continue
-                if (i.key>p.periodEndMS && i.value == "User present"){
-                    finalMap[i.key] = i.value
-                    break
-                }
-                finalMap[i.key] = i.value
-            }
-            startCalculations(finalMap)
-        }
+        val durationString = getSleepingDuration(longestPeriod)
+        val duration2 = getSleepingDurationInNumbers(longestPeriod)
+
+        trackerPeriod = trackerPeriod.copyOfBuilder()
+            .sleepDuration(durationString)
+            .durationInNumbers(duration2)
+            .build()
+        onCompleteCallback()
     }
 
-    private fun setSortedStates(p: Period,onCompleteCallback: ((sortedStates: SortedMap<Long,String>) -> Unit)){
-        if (trackerPeriod.deviceStates.size == 0){
-            loadPeriod{
-                trackerPeriod.deviceStates?.let {
-                        it.forEach lit@{state->
-                        val ms = TimeUtil.getCorrectEventTimeMS(p, state.time) ?: return@lit
-                        sortedStates[ms] = state.state
-                    }
-                }
-                onCompleteCallback(sortedStates)
-            }
-        }else{
-            trackerPeriod.deviceStates?.forEach lit@{ state->
+    private fun setSortedStates(p: Period, onCompleteCallback: ((sortedStates: SortedMap<Long,String>) -> Unit)){
+        AWS.getPredicate(
+            Where.matches(
+                DeviceState.TRACKERPERIOD_ID.eq(pid)
+            ).queryPredicate,
+            DeviceState::class.java
+        ){
+            val states = it.data
+            states?.forEach lit@{ state ->
+                if (state !is DeviceState) return@lit
                 val ms = TimeUtil.getCorrectEventTimeMS(p, state.time) ?: return@lit
                 sortedStates[ms] = state.state
             }
@@ -189,65 +234,99 @@ class SleepPeriod(var period: Period) {
 
     }
 
-    fun calculateSessions(onCompleteCallback: () -> Unit){
-        var lastEvent : String? = null
-        var lastEventTime = 0L
-        val sessions : HashMap<Long,Period> = hashMapOf()
+    fun calculateSessions(onCompleteCallback: (sessions : HashMap<Long,Period>) -> Unit){
+        setSortedStates(period){
+            var lastEvent : String? = null
+            var lastEventTime = 0L
+            val sessions : HashMap<Long,Period> = hashMapOf()
 
-        for ((time , event) in sortedStates){
-            if (event == "User present") {
-                if (lastEvent == "User present") {
-                    //Do nothing, as we want to keep last USER_PRESENT Event time, first one
-                } else {
-                    lastEvent = event
-                    lastEventTime = time
-                }
-            } else if (event == "off") {
-                if (lastEvent == "User present") {
-                    if (time - lastEventTime > 5 * MINUTE_IN_MS) {
-                        // here we have a session
-                        // lastEventTime is session start in this case
-                        // time is session end in this case
-                        sessions[lastEventTime] = Period(lastEventTime, time)
+            for ((time , event) in it){
+                if (event == "User present") {
+                    if (lastEvent == "User present") {
+                        //Do nothing, as we want to keep last USER_PRESENT Event time, first one
+                    } else {
+                        lastEvent = event
+                        lastEventTime = time
                     }
-                    lastEvent = event
-                    lastEventTime = time
-                } else {
-                    lastEvent = event
-                    lastEventTime = time
+                } else if (event == "off") {
+                    if (lastEvent == "User present") {
+                        if (time - lastEventTime > 5 * MINUTE_IN_MS) {
+                            // here we have a session
+                            // lastEventTime is session start in this case
+                            // time is session end in this case
+                            sessions[lastEventTime] = Period(lastEventTime, time)
+                        }
+                        lastEvent = event
+                        lastEventTime = time
+                    } else {
+                        lastEvent = event
+                        lastEventTime = time
+                    }
                 }
             }
+            val count = sessions.size.toString()
+
+            trackerPeriod = trackerPeriod.copyOfBuilder().disturbancesCount(count).build()
+            saveSessions(sessions){
+                onCompleteCallback(sessions)
+            }
         }
-        val count = sessions.size.toString()
-        val strings = mutableListOf<String>()
+    }
+
+    private fun saveSessions(sessions:HashMap<Long,Period> ,function: () -> Unit) {
+        //todo test
         sessions.values.forEach {
-            strings.add(it.toString())
+            pendingSaveModels.add(
+                Session.builder()
+                    .start(it.getStartTime())
+                    .end(it.getEndTime())
+                    .trackerperiodId(pid)
+                    .id("${it.getPeriodID()} : pid:$pid")
+                    .build()
+            )
         }
-        trackerPeriod = trackerPeriod.copyOfBuilder().disturbancesCount(count).sessions(strings).build()
-        onCompleteCallback()
+        function()
     }
 
     fun calculateAverageMovementCount(onCompleteCallback: ()-> Unit){
+        //todo test
         var averageMovementCount = 0
         val sortedPortions = sortedMapOf<Long,Period>()
         period.periodPortions.forEach{
             sortedPortions[it.periodStartMS] = it
         }
-        val countList = arrayListOf<Int>()
-        for ((_, p) in sortedPortions){
-            val count = getSubPeriodWithTime(p.getMinuteRangePeriodID())?.movementCount ?: continue
-            countList.add(count)
-            val lastIndex = countList.size-1
-            if (lastIndex>=2){
-                val last3Count = countList[lastIndex] +countList[lastIndex-1] +countList[lastIndex-2]
-                if (last3Count>20) {
-                    averageMovementCount++
-                    countList.clear()
+
+        AWS.getPredicate(
+            Where.matches(
+                SubPeriod.TRACKERPERIOD_ID.eq(pid)
+            ).queryPredicate,
+            SubPeriod::class.java
+        ){ res ->
+            val subPeriods = res.data
+            val countList = arrayListOf<Int>()
+            for ((_, p) in sortedPortions){
+                subPeriods?.forEach let@{
+                    if (it !is SubPeriod) return@let
+                    if (it.range!= p.getMinuteRangePeriodID()) return@let
+
+                    val count = it.movementCount
+                    countList.add(count)
+                    val lastIndex = countList.size - 1
+                    if (lastIndex >= 2) {
+                        val last3Count =
+                            countList[lastIndex] + countList[lastIndex - 1] + countList[lastIndex - 2]
+                        if (last3Count > 20) {
+                            averageMovementCount++
+                            countList.clear()
+                        }
+                    }
                 }
             }
+            trackerPeriod = trackerPeriod.copyOfBuilder().averageMovementCount(averageMovementCount.toString()).build()
+            onCompleteCallback()
         }
-        trackerPeriod = trackerPeriod.copyOfBuilder().averageMovementCount(averageMovementCount.toString()).build()
-        onCompleteCallback()
+
+
     }
 
     private fun getSleepingDuration(msDuration: Long): String {
@@ -263,44 +342,56 @@ class SleepPeriod(var period: Period) {
         return "$hours:$minutes"
     }
 
-    private fun getLongestPeriod(eventsSortedMap:SortedMap<Long,String>):Long{
-        var longestPeriod: Long = 0
-        var lastAsleep = period.periodStartMS
-        var lastUserPresent = period.periodStartMS
-        val periodEndMS = period.periodEndMS
-        var isPresent = false
-        eventsSortedMap.forEach lit@{
-            if (it.value == "on") return@lit
-            if (it.value == "User present") {
-                if (it.key > periodEndMS) {
-                    val thisPeriodLength = it.key - lastAsleep
-                    if (thisPeriodLength > longestPeriod) {
-                        longestPeriod = thisPeriodLength
-                    }
-                    return@lit
-                } else {
-                    lastUserPresent = it.key
-                    isPresent = true
-                }
-            } else if (it.value == "off") {
-                if (isPresent) {
-                    if (it.key - lastUserPresent > 5 * MINUTE_IN_MS) {
-                        val newPeriod = lastUserPresent - lastAsleep
-                        if (newPeriod > longestPeriod) {
-                            longestPeriod = newPeriod
-                        }
-                        lastAsleep = it.key
-                    }
-                    isPresent = false
+    private fun getLongestPeriod(sessions:HashMap<Long,Period> ,eventsSortedMap:SortedMap<Long,String>):Long?{
+        val lastPresence = getLastUserPresenceEventTime(eventsSortedMap) ?: return null
+        val firstOff = getFirstOffEventTime(eventsSortedMap) ?: return null
+        val longest1 =  lastPresence - firstOff
+        val sessionsDurations = getSessionsDurations(sessions)
+        return longest1 - sessionsDurations
+    }
+
+    private fun getSessionsDurations(sessions: HashMap<Long, Period>): Long {
+        var duration = 0L
+        sessions.values.forEach {
+            duration += it.periodEndMS - it.periodStartMS
+        }
+        return duration
+    }
+
+    private fun getFirstOffEventTime(eventsSortedMap:SortedMap<Long,String>) : Long? {
+        var timeMs:Long? = null
+        run {
+            eventsSortedMap.forEach { (l, s) ->
+                if (s == "off") {
+                    timeMs = l
+                    return@run
                 }
             }
         }
-
-        return longestPeriod
+        if (timeMs!=null){
+            val actualSleepTime = TimeUtil.formatTimeMS(timeMs!!)
+            trackerPeriod = trackerPeriod.copyOfBuilder().actualSleepTime(actualSleepTime).build()
+        }
+        return timeMs
     }
 
+    private fun getLastUserPresenceEventTime(eventsSortedMap:SortedMap<Long,String>) : Long? {
+        var timeMs:Long? = null
 
-
+        while (eventsSortedMap.size > 0){
+            val last = eventsSortedMap.lastKey()
+            val s = eventsSortedMap.remove(last)
+            if (s == "User present") {
+                timeMs = last
+                break
+            }
+        }
+        if (timeMs!=null){
+            val actualWakeUpTime = TimeUtil.formatTimeMS(timeMs)
+            trackerPeriod = trackerPeriod.copyOfBuilder().actualWakeUpTime(actualWakeUpTime).build()
+        }
+        return timeMs
+    }
 
 
 }
