@@ -1,29 +1,41 @@
-type SubPeriod {
-  Range: String!
-  MovementCount: Int!
+type Session @model @auth(rules: [{allow: private}]) {
+  id: ID!
+  start: String!
+  end: String!
+  trackerperiodID: ID! @index(name: "byTrackerPeriod")
 }
 
-type DeviceState {
+type DeviceState @model @auth(rules: [{allow: private}]) {
+  id: ID!
   Time: String!
   State: String!
+  trackerperiodID: ID! @index(name: "byTrackerPeriod")
+}
+
+type SubPeriod @model @auth(rules: [{allow: private}]) {
+  id: ID!
+  Range: String!
+  MovementCount: Int!
+  trackerperiodID: ID! @index(name: "byTrackerPeriod")
 }
 
 type TrackerPeriod @model @auth(rules: [{allow: owner}]) {
   id: ID!
   WakeUpTime: String!
   SleepTime: String!
-  ended: String
   AverageMovementCount: String
   SleepDuration: String
   DurationInNumbers: String
   DisturbancesCount: String
-  SubPeriods: [SubPeriod]
-  Sessions: [String]
-  DeviceStates: [DeviceState]
   TotalMovements: Int
   AccelerometerLastReading: Float
   createdAt: AWSDateTime!
   userID: ID! @index(name: "byUser")
+  Sessions: [Session] @hasMany(indexName: "byTrackerPeriod", fields: ["id"])
+  DeviceStates: [DeviceState] @hasMany(indexName: "byTrackerPeriod", fields: ["id"])
+  SubPeriods: [SubPeriod] @hasMany(indexName: "byTrackerPeriod", fields: ["id"])
+  ActualSleepTime: String
+  ActualWakeUpTime: String
 }
 
 type SurveyEntry @model @auth(rules: [{allow: owner}]) {

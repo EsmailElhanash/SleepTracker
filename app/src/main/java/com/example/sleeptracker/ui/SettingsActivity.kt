@@ -301,7 +301,6 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
                         val intent = Intent(context.applicationContext, LoginActivity::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         context.startActivity(intent)
-                        Amplify.DataStore.clear({},{})
                     },
                     {
                         it.localizedMessage?.let { it1 -> onFailure(it1) }

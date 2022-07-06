@@ -8,13 +8,12 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
-import com.amplifyframework.core.Amplify
 import com.amplifyframework.core.model.Model
 import com.amplifyframework.core.model.query.Where
 import com.amplifyframework.core.model.temporal.Temporal
 import com.amplifyframework.datastore.generated.model.TrackerPeriod
 import com.example.sleeptracker.R
-import com.example.sleeptracker.aws.DB
+import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.background.receivers.SurveyAlarmReceiver
 import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.ui.MainActivity
@@ -23,7 +22,10 @@ import com.example.sleeptracker.utils.PREFERENCES_NAME
 import com.example.sleeptracker.utils.androidutils.NotificationType
 import com.example.sleeptracker.utils.androidutils.NotificationsManager
 import com.example.sleeptracker.utils.time.DAY_IN_MS
-import com.example.sleeptracker.utils.time.TimeUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.*
 
 const val SURVEY_ALARM_ID = 12321
@@ -32,14 +34,19 @@ private const val DISPLAYABLE_DAYS_COUNT = 7
 class SurveyService : Service() {
 
     private var isForeground: Boolean = false
-    private val user = UserModel.user
+    private lateinit var user : UserModel
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        user = UserModel()
         goForeGround()
         scheduleSurveyCheck()
-        checkSurveyConditionOne{
-            checkSurveyConditionTwo {
-                stopForeground()
+        CoroutineScope(Dispatchers.IO).launch {
+            checkSurveyConditionOne{
+                checkSurveyConditionTwo {
+                    stopForeground()
+                }
             }
+            delay(60000)
+            if (isForeground) stopForeground()
         }
 
         return START_NOT_STICKY
@@ -71,54 +78,12 @@ class SurveyService : Service() {
         val nowMS = Calendar.getInstance().timeInMillis
         var s1 : Long? = null
         var s2 : Long? = null
-        var loadPeriodsData = {}
-        val checkDate = { c1:Long , c2:Long ->
-            user.getSurveyRetakePeriod {
-                if (nowMS > c1 + 7 * DAY_IN_MS && nowMS > c2 + it * DAY_IN_MS) {
-                    loadPeriodsData()
-                } else {
-                    onComplete()
-                }
-            }
-         }
-
-        UserModel.user.getSurveyLastUpdatedCaseOne{
-            s1 = it
-            if (s1!=null && s2!=null)checkDate(s1!!, s2!!)
-        }
-
-
-        UserModel.user.getSurveyLastUpdatedCaseTwo{
-            s2 = it
-            if (s1!=null && s2!=null)checkDate(s1!!, s2!!)
-        }
-
-
-        var checkCondition = {}
 
         val sortedMovementCount :SortedMap<Long,Int> = sortedMapOf()
         val sortedDisturbancesCount :SortedMap<Long,Int> = sortedMapOf()
 
-        loadPeriodsData = {
-            getPeriodsData{
-                it?.forEach let@{ model ->
-                    if (model !is TrackerPeriod) return@let
-                    val ms = model.createdAt?.toDate()?.time
-                    try {
-                        val count = model.disturbancesCount.toInt()
-                        sortedDisturbancesCount[ms]=count
-                    }catch (e:Exception){}
 
-                    try {
-                        val count = model.averageMovementCount.toInt()
-                        sortedMovementCount[ms]=count
-                    }catch (e:Exception){}
-                }
-
-                checkCondition()
-            }
-        }
-        checkCondition = {
+        val checkCondition = {
             val movementCountList = arrayListOf<Int>()
             val disturbancesCountList = arrayListOf<Int>()
             var shouldShowConditionTwoNotification = false
@@ -164,11 +129,48 @@ class SurveyService : Service() {
 
             onComplete()
         }
+
+        val checkDate = { c1:Long , c2:Long ->
+            user.getSurveyRetakePeriod {
+                if (nowMS > c1 + 7 * DAY_IN_MS && nowMS > c2 + it * DAY_IN_MS) {
+                    getPeriodsData{
+                        it?.forEach let@{ model ->
+                            if (model !is TrackerPeriod) return@let
+                            val ms = model.createdAt?.toDate()?.time
+                            try {
+                                val count = model.disturbancesCount.toInt()
+                                sortedDisturbancesCount[ms]=count
+                            }catch (e:Exception){}
+
+                            try {
+                                val count = model.averageMovementCount.toInt()
+                                sortedMovementCount[ms]=count
+                            }catch (e:Exception){}
+                        }
+
+                        checkCondition()
+                    }
+                } else {
+                    onComplete()
+                }
+            }
+         }
+
+        user.getSurveyLastUpdatedCaseOne{
+            s1 = it
+            if (s1!=null && s2!=null)checkDate(s1!!, s2!!)
+        }
+
+
+        user.getSurveyLastUpdatedCaseTwo{
+            s2 = it
+            if (s1!=null && s2!=null)checkDate(s1!!, s2!!)
+        }
     }
 
     private fun getPeriodsData(onComplete: (trackerPeriods: List<Model>?) -> Unit){
         val range = getPeriodsRange()
-        DB.getPredicate(
+        AWS.getPredicate(
             Where.matches(
                 TrackerPeriod.CREATED_AT.between(range.first,range.second)
             ).queryPredicate,
@@ -194,9 +196,15 @@ class SurveyService : Service() {
         calendar.set(Calendar.MINUTE,0)
         print(calendar.time)
         val pIntent = Intent(applicationContext, SurveyAlarmReceiver::class.java).let { intent ->
-            PendingIntent.getBroadcast(applicationContext,
-                SURVEY_ALARM_ID,
-                intent, PendingIntent.FLAG_UPDATE_CURRENT)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PendingIntent.getBroadcast(applicationContext,
+                    SURVEY_ALARM_ID,
+                    intent, PendingIntent.FLAG_IMMUTABLE)
+            } else {
+                PendingIntent.getBroadcast(applicationContext,
+                    SURVEY_ALARM_ID,
+                    intent, PendingIntent.FLAG_UPDATE_CURRENT)
+            }
         }
         when {
             Build.VERSION.SDK_INT >= 23 -> {
@@ -226,7 +234,15 @@ class SurveyService : Service() {
         val pendingIntent: PendingIntent =
             Intent(this, MainActivity::class.java)
                 .let { notificationIntent ->
-                    PendingIntent.getActivity(this, 0, notificationIntent, 0)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        PendingIntent.getActivity(this, 0, notificationIntent,
+                            PendingIntent.FLAG_IMMUTABLE
+                        )
+                    } else {
+                        PendingIntent.getActivity(this, 0, notificationIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT
+                        )
+                    }
                 }
         startForeground(131,NotificationsManager.createNotification(
             pendingIntent,applicationContext,getText(R.string.checking_survey), NotificationType.UPDATING_DATA

@@ -10,17 +10,16 @@ import com.amplifyframework.AmplifyException
 import com.amplifyframework.api.aws.AWSApiPlugin
 import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin
 import com.amplifyframework.core.Amplify
-import com.amplifyframework.core.AmplifyConfiguration
 import com.amplifyframework.datastore.AWSDataStorePlugin
-import com.amplifyframework.datastore.generated.model.TrackerPeriod
+import com.amplifyframework.datastore.DataStoreConfiguration
 import com.amplifyframework.datastore.generated.model.User
+import com.example.sleeptracker.BuildConfig
 import com.example.sleeptracker.R
-import com.example.sleeptracker.aws.DB
+import com.example.sleeptracker.aws.AWS
+import com.example.sleeptracker.aws.initAws
 import com.example.sleeptracker.database.utils.DBParameters.CONSENT_ACCEPTED
-import com.example.sleeptracker.objects.Period
 import com.example.sleeptracker.ui.signin.LoginActivity
-import com.example.sleeptracker.ui.signin.SignUpActivity
-import com.example.sleeptracker.ui.survey.SurveyActivity
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity()  {
@@ -30,9 +29,9 @@ class MainActivity : AppCompatActivity()  {
 //    private lateinit var auth: FirebaseAuth
 
     companion object {
-        const val TEST = true
-
+        var TEST = BuildConfig.DEBUG
         const val TAG  = "MainActivity"
+        const val c  = 211
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,10 +40,8 @@ class MainActivity : AppCompatActivity()  {
 
 
 
-        configureAWS {
+        initAws{
             val uid = Amplify.Auth?.currentUser?.userId
-
-
             Log.d(TAG, "onCreate: $uid")
             if (uid==null){
                 val intent = Intent(this, LoginActivity::class.java)
@@ -52,7 +49,7 @@ class MainActivity : AppCompatActivity()  {
                 finish()
             }else {
                 Log.d(TAG, "onCreate: $uid")
-                DB.get(uid,User::class.java){
+                AWS.get(uid,User::class.java){
                     Log.d(TAG, "onCreate: ${it.success}")
                     val u = it.data as User
                     if (u.consent == CONSENT_ACCEPTED){
@@ -65,22 +62,6 @@ class MainActivity : AppCompatActivity()  {
                     finish()
                 }
             }
-        }
-    }
-
-    private fun configureAWS(onSuccess : ()->Unit) {
-        try{
-            Amplify.addPlugin(AWSDataStorePlugin())
-            Amplify.addPlugin(AWSApiPlugin())
-            Amplify.addPlugin(AWSCognitoAuthPlugin())
-            Amplify.configure(AmplifyConfiguration.fromConfigFile(applicationContext,R.raw.amplifyconfiguration),applicationContext)
-            onSuccess()
-        }catch (e: AmplifyException){
-            if (e is Amplify.AlreadyConfiguredException) {
-                onSuccess()
-                return
-            }
-            Toast.makeText(this,"Error Occurred" , Toast.LENGTH_SHORT).show()
         }
     }
 }

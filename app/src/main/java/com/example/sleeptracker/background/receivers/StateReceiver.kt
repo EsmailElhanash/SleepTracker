@@ -9,11 +9,9 @@ import java.util.*
 
 class StateReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
-        val uid = Amplify.Auth.currentUser?.userId ?: return
         val appCtx = context?.applicationContext
         val period = TrackerService.getActivePeriod()
-        val pid = period?.id
-        pid?.let{
+        period?.let{
             when (intent?.action) {
                 Intent.ACTION_SCREEN_OFF -> {
                     period.saveState("off")

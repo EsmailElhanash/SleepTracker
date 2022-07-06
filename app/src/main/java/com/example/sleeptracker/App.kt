@@ -1,20 +1,28 @@
 package com.example.sleeptracker
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
+import androidx.core.content.IntentCompat
 
 
 class App : Application() {
+
     companion object{
+        @SuppressLint("UnspecifiedImmutableFlag")
+        lateinit var INSTANCE: App
         fun restart (context: Context){
-            val packageManager: PackageManager = context.packageManager
-            val intent = packageManager.getLaunchIntentForPackage(context.packageName)
-            val componentName = intent?.component
-            val mainIntent = Intent.makeRestartActivityTask(componentName)
-            context.startActivity(mainIntent)
-            Runtime.getRuntime().exit(0)
+            val mainIntent =
+                IntentCompat.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_LAUNCHER)
+            mainIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.applicationContext.startActivity(mainIntent)
+            System.exit(0)
         }
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        INSTANCE = this@App
     }
 }

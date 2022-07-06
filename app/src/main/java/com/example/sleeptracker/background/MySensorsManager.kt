@@ -15,7 +15,6 @@ class MySensorsManager(private val period: SleepPeriod) : SensorEventListener {
     private var currentAccelerometerReading: Double = 0.0
     private var mSensorManager: SensorManager? = null
     private var accelerometerSensor: Sensor? = null
-    private val pid = period.id
 
     fun startSensors(context: Context) {
         mSensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager

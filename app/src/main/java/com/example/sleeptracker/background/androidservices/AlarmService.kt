@@ -3,6 +3,7 @@ package com.example.sleeptracker.background.androidservices
 import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.PendingIntent
+import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -21,14 +22,19 @@ import com.example.sleeptracker.utils.androidutils.NotificationType
 import com.example.sleeptracker.utils.androidutils.NotificationsManager
 import com.example.sleeptracker.utils.time.DAY_IN_MS
 import com.example.sleeptracker.utils.time.TimeUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.DateFormatSymbols
 import java.util.*
 
 
 class AlarmService : Service() {
     private var isForeground: Boolean = false
-
+    private lateinit var user: UserModel
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        user = UserModel()
         if(!isForeground)  prepareAlarmStartTime()
         else {
             stopForeground()
@@ -41,7 +47,7 @@ class AlarmService : Service() {
         goForeGround()
         var workDaysGroup : DaysGroup? = null
         var offDaysGroup : DaysGroup? = null
-        UserModel.user.workDays.observeForever{
+        user.workDays.observeForever{
             if (it != null) {
                 workDaysGroup = it
                 if (workDaysGroup!=null && offDaysGroup!=null)
@@ -49,12 +55,16 @@ class AlarmService : Service() {
 
             }
         }
-        UserModel.user.offDays.observeForever {
+        user.offDays.observeForever {
             if (it != null) {
                 offDaysGroup = it
                 if (workDaysGroup!=null && offDaysGroup!=null)
                     setAlarm(workDaysGroup!!, offDaysGroup!!)
             }
+        }
+        CoroutineScope(Dispatchers.IO).launch{
+            delay(60000)
+            if (isForeground) stopForeground()
         }
     }
 
@@ -86,9 +96,15 @@ class AlarmService : Service() {
                 val dayDiff = (7 - (nowDayOfWeek - dayNum)) % 7
                 val startTimeMS = (nxtSleepTime + dayDiff * DAY_IN_MS)
                 val pIntent = Intent(applicationContext, AlarmReceiver::class.java).let { intent ->
-                    PendingIntent.getBroadcast(applicationContext,
-                        dayNum,
-                        intent,PendingIntent.FLAG_UPDATE_CURRENT)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        PendingIntent.getBroadcast(applicationContext,
+                            dayNum,
+                            intent,FLAG_IMMUTABLE)
+                    } else {
+                        PendingIntent.getBroadcast(applicationContext,
+                            dayNum,
+                            intent,PendingIntent.FLAG_UPDATE_CURRENT)
+                    }
                 }
                 Log.d("setAlarm ", ": ${Date(startTimeMS)}")
                 when {
@@ -131,7 +147,7 @@ class AlarmService : Service() {
         val pendingIntent: PendingIntent =
             Intent(this, MainActivity::class.java)
                 .let { notificationIntent ->
-                    PendingIntent.getActivity(this, 0, notificationIntent, 0)
+                    PendingIntent.getActivity(this, 0, notificationIntent, FLAG_IMMUTABLE)
                 }
         startForeground(11114, NotificationsManager.createNotification(
             pendingIntent,applicationContext,getText(R.string.updating_data),NotificationType.UPDATING_DATA

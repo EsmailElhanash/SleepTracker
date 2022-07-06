@@ -1,12 +1,12 @@
 package com.example.sleeptracker.models
 
-import androidx.lifecycle.LiveData
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.amplifyframework.core.Amplify
 import com.amplifyframework.datastore.generated.model.DayGroup
 import com.amplifyframework.datastore.generated.model.User
-import com.example.sleeptracker.aws.DB
+import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.background.androidservices.TrackerService
 import com.example.sleeptracker.database.utils.DBParameters.DAYS
 import com.example.sleeptracker.objects.DaysGroup
@@ -19,10 +19,7 @@ import java.util.*
 
 
 class UserModel : ViewModel() {
-    companion object {
-        val user = UserModel()
-    }
-    var uid: String? = DB.uid
+
 //    //Sleep Data
     val workDays : MutableLiveData<DaysGroup> = MutableLiveData()
     val offDays : MutableLiveData<DaysGroup> = MutableLiveData()
@@ -30,16 +27,17 @@ class UserModel : ViewModel() {
     private var surveyLastUpdated: Long? = null
     private var surveyLastUpdated2: Long? = null
     private var surveyRetakePeriod: Int? = null
-
+    companion object {
+        private const val TAG = "UserModel"
+    }
     init {
-        uid?.let {
+        AWS.uid?.let {
             loadUser(it){}
         }
     }
 
     fun init (){
-        uid = DB.uid
-        uid?.let {
+        AWS.uid?.let {
             loadUser(it){}
         }
     }
@@ -48,7 +46,7 @@ class UserModel : ViewModel() {
         val retakePeriod = surveyRetakePeriod
         if (retakePeriod!=null) onComplete(retakePeriod)
         else {
-            uid?.let {
+            AWS.uid?.let {
                 loadUser(it){
                     val retakePeriod2 = surveyRetakePeriod
                     if (retakePeriod2!=null) onComplete(retakePeriod2)
@@ -61,7 +59,7 @@ class UserModel : ViewModel() {
         val last = surveyLastUpdated
         if (last!=null) onComplete(last)
         else {
-            uid?.let {
+            AWS.uid?.let {
                 loadUser(it){
                     val last2 = surveyLastUpdated
                     if (last2!=null) onComplete(last2)
@@ -74,7 +72,7 @@ class UserModel : ViewModel() {
         val last = surveyLastUpdated2
         if (last!=null) onComplete(last)
         else {
-            uid?.let {
+            AWS.uid?.let {
                 loadUser(it){
                     val last2 = surveyLastUpdated2
                     if (last2!=null) onComplete(last2)
@@ -87,7 +85,7 @@ class UserModel : ViewModel() {
         val wd = workDays.value
         if (wd!=null) send(wd)
         else {
-            uid?.let {
+            AWS.uid?.let {
                 loadUser(it){
                     workDays.value?.let{wd->send(wd)}
                 }
@@ -99,7 +97,7 @@ class UserModel : ViewModel() {
         val od = offDays.value
         if (od!=null) send(od)
         else {
-            uid?.let {
+            AWS.uid?.let {
                 loadUser(it){
                     offDays.value?.let{od->send(od)}
                 }
@@ -108,38 +106,49 @@ class UserModel : ViewModel() {
     }
 
     fun updateConsent(v:String,onSuccess:()->Unit,onFailure:()->Unit) {
-        val id = uid
+        val id = AWS.uid
         if (id == null) {
             onFailure()
             return
         }
-        DB.get(id,User::class.java){ response ->
+        AWS.get(id,User::class.java){ response ->
             if (response.success){
                 val edited = (response.data as User).copyOfBuilder().consent(v).build()
 
-                DB.save(edited){
+                AWS.save(edited){
                     if (it.success) onSuccess() else onFailure()
                 }
             }
         }
     }
 
-    fun getSleepPeriodCallBack(callback: ((periods: List<Period>) -> Unit)) {
-        val wd = workDays.value
-        val od = offDays.value
-        if (wd == null || od==null) {
-            callback(arrayListOf())
-            return
+    fun getSleepPeriodCallBack(re:Int? = 0,callback: ((periods: List<Period>) -> Unit)) {
+        Log.d(TAG, "getSleepPeriodCallBack: ")
+        val uid = AWS.uid ?: return
+        loadUser(uid) {
+            val wd = workDays.value
+            val od = offDays.value
+            if (wd == null||od == null )
+            {
+                if (re != null && re<10) {
+                    Thread.sleep(1000)
+                    getSleepPeriodCallBack(re+1, callback)
+                }
+                return@loadUser
+            }
+            val possibleActivePeriods:ArrayList<Period> = arrayListOf()
+            val nowDayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) % 7
+            val yesterday = Calendar.getInstance().let { cal->
+                cal.time = Date(cal.timeInMillis - DAY_IN_MS)
+                cal.get(Calendar.DAY_OF_WEEK) % 7
+            }
+            getPossibleActivePeriods(wd,od,nowDayOfWeek)?.let { it1 -> possibleActivePeriods.add(it1) }
+            getPossibleActivePeriods(wd,od,yesterday)?.let { it1 -> possibleActivePeriods.add(it1) }
+            Log.d(TAG, "getSleepPeriodCallBack: $possibleActivePeriods")
+            callback(possibleActivePeriods)
+
         }
-        val possibleActivePeriods:ArrayList<Period> = arrayListOf()
-        val nowDayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) % 7
-        val yesterday = Calendar.getInstance().let { cal->
-            cal.time = Date(cal.timeInMillis - DAY_IN_MS)
-            cal.get(Calendar.DAY_OF_WEEK) % 7
-        }
-        getPossibleActivePeriods(wd,od,nowDayOfWeek)?.let { it1 -> possibleActivePeriods.add(it1) }
-        getPossibleActivePeriods(wd,od,yesterday)?.let { it1 -> possibleActivePeriods.add(it1) }
-        callback(possibleActivePeriods)
+
     }
 
     private fun getPossibleActivePeriods(workDaysGroup: DaysGroup , offDaysGroup: DaysGroup , day:Int):Period?{
@@ -167,14 +176,21 @@ class UserModel : ViewModel() {
 
 
 
-    private fun loadUser(uid: String, onComplete: ()-> Unit) {
-        DB.get(uid,User::class.java){
-            val u = it.data as? User ?: return@get
+    private fun loadUser(uid: String, re:Int? = 0, onComplete: ()-> Unit) {
+        AWS.get(uid,User::class.java){
+            val u = it.data as? User
+            if (u==null){
+                if (re != null && re<10) {
+                    Thread.sleep(3000)
+                    loadUser(uid,re+1, onComplete)
+                }
+                return@get
+            }
             val offDaysGroup = createDaysGroup(u.offDay,GroupType.OFF_DAYS)
-            offDays.setValue(offDaysGroup)
+            offDays.postValue(offDaysGroup)
 
             val workDaysGroup = createDaysGroup(u.workday,GroupType.WORK_DAYS)
-            workDays.setValue(workDaysGroup)
+            workDays.postValue(workDaysGroup)
 
             surveyLastUpdated = u.surveyLastUpdate?.toDate()?.time ?: 0
             surveyLastUpdated2 = u.surveyLastUpdate2?.time?.toDate()?.time ?: 0
@@ -192,7 +208,7 @@ class UserModel : ViewModel() {
         val offDaysGroup: DaysGroup = groups.second
         workDays.postValue(workDaysGroup)
         offDays.postValue(offDaysGroup)
-        DB.get(uid,User::class.java){
+        AWS.get(uid,User::class.java){
             val u = it.data as User
             val nu = u.copyOfBuilder()
             nu.workday(DayGroup.builder()
@@ -205,19 +221,13 @@ class UserModel : ViewModel() {
                     .wakeUpTime(offDaysGroup.wakeTime.toString())
                     .days(offDaysGroup.daysNames)
                     .build())
-            DB.save(nu.build()){ res ->
+            AWS.save(nu.build()){ res ->
                 val us = res.data as? User ?: return@save
                 val activePeriod = TrackerService.getActivePeriod()
                 if (activePeriod==null) {
                     onComplete()
                     return@save
                 }
-//                if (activePeriod.period.periodGroupType == GroupType.WORK_DAYS)
-//                    activePeriod.updatePeriodTimes(us.workday.sleepTime, us.workday.wakeUpTime)
-//                else if (activePeriod.period.periodGroupType == GroupType.OFF_DAYS)
-//                    activePeriod.updatePeriodTimes(us.offDay.sleepTime, us.offDay.wakeUpTime)
-
-
                 onComplete()
             }
         }

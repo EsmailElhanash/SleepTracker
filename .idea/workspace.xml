@@ -9,7 +9,6 @@
     </shared>
   </component>
   <component name="AndroidLogFilters">
-    <option name="TOOL_WINDOW_CUSTOM_FILTER" value="datastore" />
     <option name="TOOL_WINDOW_LOG_LEVEL" value="debug" />
     <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="Show only selected application" />
     <option name="TOOL_WINDOW_REGEXP_FILTER" value="false" />
@@ -18,39 +17,45 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1903728f-6654-4512-bd92-b8827ffbd018" name="Default Changelist" comment="26 may 2022">
-      <change afterPath="$PROJECT_DIR$/app/amplify/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/App.kt" afterDir="false" />
+    <list default="true" id="1903728f-6654-4512-bd92-b8827ffbd018" name="Default Changelist" comment="Amplify Regeneration 6 June">
+      <change afterPath="$PROJECT_DIR$/.idea/deploymentTargetDropDown.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/Session.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.2/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.2/executionHistory/executionHistory.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.2/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.2/executionHistory/executionHistory.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.2/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.2/fileHashes/fileHashes.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.2/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.2/fileHashes/fileHashes.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/7.2/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/7.2/fileHashes/resourceHashesCache.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/app/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/amplify/backend/api/appone/cli-inputs.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/amplify/backend/api/appone/cli-inputs.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/amplify/backend/api/appone/parameters.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/amplify/backend/api/appone/parameters.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/amplify/backend/api/appone/schema.graphql" beforeDir="false" afterPath="$PROJECT_DIR$/app/amplify/backend/api/appone/schema.graphql" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/amplify/backend/backend-config.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/amplify/backend/backend-config.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/amplify/backend/types/amplify-dependent-resources-ref.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/app/amplify/backend/types/amplify-dependent-resources-ref.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/amplify/cli.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/amplify/cli.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/AmplifyModelProvider.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/DayGroup.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/DeviceState.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/SubPeriod.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/Survey2Last.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/SurveyEntry.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/SurveyUpdateLastCase2.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/TrackerPeriod.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/User.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/aws/DB.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/aws/DB.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/AmplifyModelProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/AmplifyModelProvider.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/DeviceState.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/DeviceState.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/SubPeriod.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/SubPeriod.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/TrackerPeriod.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore/generated/model/TrackerPeriod.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/App.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/App.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/aws/DB.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/aws/AWS.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/background/MySensorsManager.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/background/MySensorsManager.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/background/androidservices/AlarmService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/background/androidservices/AlarmService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/background/androidservices/SurveyService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/background/androidservices/SurveyService.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/background/androidservices/TrackerService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/background/androidservices/TrackerService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/background/receivers/NotificationReceiver.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/background/receivers/NotificationReceiver.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/background/receivers/StateReceiver.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/background/receivers/StateReceiver.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/models/SleepPeriod.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/models/SleepPeriod.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/models/UserModel.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/models/UserModel.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/HomeActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/HomeActivity.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/MainActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/SettingsActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/SettingsActivity.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/signin/LoginActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/signin/LoginActivity.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app2/src/main/java/com/example/userdataapp/SignUpService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app2/src/main/java/com/example/userdataapp/SignUpService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/signin/SignUpActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/signin/SignUpActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/statistics/daily/DayPagingFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/statistics/daily/DayPagingFragment.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/statistics/daily/DayStatisticsFragment.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/statistics/daily/DayStatisticsFragment.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/survey/SurveyActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/survey/SurveyActivity.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app2/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app2/build.gradle" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -128,6 +133,9 @@
       <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
     </file-type-list>
   </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.amplifyframework/aws-datastore/1.35.3/3d45089e9c12bae43627cc729d46e07443e0ea55/aws-datastore-1.35.3-sources.jar!/com/amplifyframework/datastore/syncengine/PersistentMutationOutbox.java" root0="FORCE_HIGHLIGHTING" />
+  </component>
   <component name="ProjectId" id="1z0SEet07eBrYND1rH4eZhjUBRx" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <ConfirmationsSetting value="2" id="Add" />
@@ -140,7 +148,7 @@
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="AnalyzeApkAction.lastApkPath" value="$PROJECT_DIR$/app/build/intermediates/apk/debug/app-debug.apk" />
     <property name="ApkExportedModule" value="Sleep_Tracker.app" />
-    <property name="ExportApk.ApkPath" value="$USER_HOME$/Desktop/Work" />
+    <property name="ExportApk.ApkPath" value="$USER_HOME$/Desktop" />
     <property name="ExportApk.BuildVariants" value="release" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
@@ -158,7 +166,7 @@
     <property name="com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit4" value="" />
     <property name="dart.analysis.tool.window.visible" value="false" />
     <property name="last_directory_selection" value="$PROJECT_DIR$/app/src/main/java/com/amplifyframework/datastore" />
-    <property name="last_opened_file_path" value="$USER_HOME$/Desktop/Work" />
+    <property name="last_opened_file_path" value="$USER_HOME$/Desktop" />
     <property name="memory.settings.postsync.last.time.stamp" value="1646851182667" />
     <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.17" />
@@ -170,6 +178,9 @@
   <component name="PsdUISettings">
     <option name="MODULE_TAB" value="Default Config" />
     <option name="LAST_EDITED_SIGNING_CONFIG" value="release" />
+  </component>
+  <component name="ReaderModeSettings">
+    <option name="enabled" value="false" />
   </component>
   <component name="RecentsManager">
     <key name="android.template.-830056959">
@@ -663,7 +674,21 @@
       <option name="project" value="LOCAL" />
       <updated>1653583728541</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="Amplify Regeneration 6 June">
+      <created>1654517588792</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1654517588792</updated>
+    </task>
+    <task id="LOCAL-00015" summary="Amplify Regeneration 6 June">
+      <created>1654517604522</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1654517604522</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -707,20 +732,26 @@
     <MESSAGE value="Sign Up to aws, both apps, is complete" />
     <MESSAGE value="13 may 2022" />
     <MESSAGE value="26 may 2022" />
-    <option name="LAST_COMMIT_MESSAGE" value="26 may 2022" />
+    <MESSAGE value="Amplify Regeneration 6 June" />
+    <option name="LAST_COMMIT_MESSAGE" value="Amplify Regeneration 6 June" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/signin/LoginActivity.kt</url>
-          <line>45</line>
-          <option name="timeStamp" value="29" />
+          <url>file://$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/background/androidservices/TrackerService.kt</url>
+          <line>206</line>
+          <option name="timeStamp" value="175" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/models/UserModel.kt</url>
-          <line>110</line>
-          <option name="timeStamp" value="30" />
+          <url>file://$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/statistics/daily/DayStatisticsFragment.kt</url>
+          <line>32</line>
+          <option name="timeStamp" value="176" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/app/src/main/java/com/example/sleeptracker/ui/statistics/daily/DayStatisticsFragment.kt</url>
+          <line>33</line>
+          <option name="timeStamp" value="177" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

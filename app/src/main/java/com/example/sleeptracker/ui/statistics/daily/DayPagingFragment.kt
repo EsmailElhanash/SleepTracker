@@ -1,11 +1,9 @@
 package com.example.sleeptracker.ui.statistics.daily
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
@@ -13,14 +11,13 @@ import com.amplifyframework.core.model.query.Where
 import com.amplifyframework.core.model.query.predicate.QueryPredicate
 import com.amplifyframework.datastore.generated.model.TrackerPeriod
 import com.example.sleeptracker.R
-import com.example.sleeptracker.aws.DB
+import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.utils.time.DAY_IN_MS
 import com.example.sleeptracker.utils.time.IDFormatter
 import com.example.sleeptracker.utils.time.TimeUtil
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
-import okhttp3.internal.notify
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -53,7 +50,7 @@ class DayPagingFragment : Fragment() {
         periodsIDs.forEach { pid ->
             predicates = predicates.or(TrackerPeriod.ID.beginsWith(pid))
          }
-        DB.getPredicate(
+        AWS.getPredicate(
             predicates,
             TrackerPeriod::class.java
         ){
