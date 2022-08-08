@@ -11,6 +11,7 @@ import com.amplifyframework.core.model.temporal.Temporal
 import com.amplifyframework.datastore.generated.model.SurveyUpdateLastCase2
 import com.amplifyframework.datastore.generated.model.User
 import com.example.sleeptracker.aws.AWS
+import com.example.sleeptracker.initAws
 import com.example.sleeptracker.ui.survey.SurveyActivity
 import com.example.sleeptracker.utils.androidutils.NotificationType
 import com.example.sleeptracker.utils.androidutils.NotificationsManager
@@ -23,35 +24,39 @@ import java.util.*
 class NotificationReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context?, intent: Intent?) {
-        context?:return
-        val id = 13132
-        val action = intent?.action
-        if(action =="no"){
-            val intentF = Intent(context.applicationContext, NotificationReceiver::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
-            val pendingIntent: PendingIntent = PendingIntent.getBroadcast(context.applicationContext, id, intentF, 0)
-            val n = NotificationsManager.createNotification(
-                pendingIntent, context, "Thanks",
-                NotificationType.GENERAL
-            )
-            with(NotificationManagerCompat.from(context.applicationContext)) {
-                n?.build()?.let { notify(id, it) }
-            }
-
-            CoroutineScope(Dispatchers.Main).launch {
-                delay(3000)
+        context ?: return
+        initAws(context) {
+            val id = 13132
+            val action = intent?.action
+            if (action == "no") {
+                val intentF =
+                    Intent(context.applicationContext, NotificationReceiver::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    }
+                val pendingIntent: PendingIntent =
+                    PendingIntent.getBroadcast(context.applicationContext, id, intentF, 0)
+                val n = NotificationsManager.createNotification(
+                    pendingIntent, context, "Thanks",
+                    NotificationType.GENERAL
+                )
                 with(NotificationManagerCompat.from(context.applicationContext)) {
-                    n?.build()?.let { cancel(id) }
+                    n?.build()?.let { notify(id, it) }
                 }
-             }
 
-            saveLastCondition2("no")
+                CoroutineScope(Dispatchers.Main).launch {
+                    delay(3000)
+                    with(NotificationManagerCompat.from(context.applicationContext)) {
+                        n?.build()?.let { cancel(id) }
+                    }
+                }
 
-        }else if(action == "yes"){
-            showSurveyConditionTwoNotification(context.applicationContext)
-            val uid = Amplify.Auth.currentUser?.userId ?: return
-            saveLastCondition2("yes")
+                saveLastCondition2("no")
+
+            } else if (action == "yes") {
+                showSurveyConditionTwoNotification(context.applicationContext)
+                val uid = Amplify.Auth.currentUser?.userId ?: return@initAws
+                saveLastCondition2("yes")
+            }
         }
     }
 

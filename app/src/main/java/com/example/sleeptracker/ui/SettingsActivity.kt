@@ -2,6 +2,7 @@ package com.example.sleeptracker.ui
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,7 +11,9 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.amplifyframework.core.Amplify
+import com.example.sleeptracker.App
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.androidservices.AlarmService
 import com.example.sleeptracker.background.androidservices.TrackerService
@@ -63,9 +66,10 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
 
 
         binding.updateTimeButton.setOnClickListener {
+            binding.updateTimeButton.isEnabled = false
             getWorkAndOffDaysGroups{
                 user.updateDayGroups(it){
-                    startService(Intent(this,AlarmService::class.java))
+                    ContextCompat.startForegroundService(applicationContext,Intent(applicationContext,AlarmService::class.java))
                 }
 
             }
@@ -115,7 +119,7 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
         myDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
             getWorkAndOffDaysGroups(view){
                 user.updateDayGroups(it){
-                    startService(Intent(this,AlarmService::class.java))
+                    ContextCompat.startForegroundService(context.applicationContext,Intent(applicationContext, AlarmService::class.java))
                 }
             }
             myDialog.dismiss()
@@ -291,6 +295,7 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
                 binding.timesPickLayout.addOffDayWakeTime.text = timePoint.toString()
             }
         }
+        binding.updateTimeButton.isEnabled = true
     }
     private fun confirmLogout(context: Context){
         val myDialog = AlertDialog.Builder(context)

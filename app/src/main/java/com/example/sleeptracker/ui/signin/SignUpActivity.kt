@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.RadioButton
 import android.widget.Toast
@@ -59,8 +60,8 @@ class SignUpActivity : AppCompatActivity()
     private val app2SignUpReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent==null) return
-
             val errors = intent.getStringExtra(App2Service.SIGN_UP_ERROR)
+            Log.d("app2SignUpReceiver", "onReceive: $errors")
             if (errors==null){
                 val sid = intent.getStringExtra(App2Service.SID)
                 val result = intent.getBooleanExtra(App2Service.SIGN_UP_RESULT,false)
@@ -199,7 +200,7 @@ class SignUpActivity : AppCompatActivity()
             intent2.putExtra(it.key,it.value)
         }
         intent2.putExtra(SignUpStrings.SID,sid)
-        startService(intent2)
+        applicationContext.startService(intent2)
     }
 
     private fun onFailure(message: String){
@@ -213,7 +214,7 @@ class SignUpActivity : AppCompatActivity()
         }
     }
 
-    @Synchronized
+
     private fun createUser()  {
         if (id1 != null && id2!= null && !userCreated){
             userCreated = true

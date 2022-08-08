@@ -13,14 +13,18 @@ import com.amplifyframework.core.model.query.QuerySortBy
 import com.amplifyframework.core.model.query.QuerySortOrder
 import com.amplifyframework.core.model.query.Where
 import com.amplifyframework.core.model.query.predicate.QueryPredicate
-import com.amplifyframework.datastore.AWSDataStorePlugin
-import com.amplifyframework.datastore.DataStoreChannelEventName
-import com.amplifyframework.datastore.DataStoreConfiguration
+import com.amplifyframework.datastore.*
 import com.amplifyframework.datastore.generated.model.User
 import com.amplifyframework.hub.HubChannel
+import com.amplifyframework.kotlin.datastore.DataStore
 import com.example.sleeptracker.App
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.androidservices.TrackerService
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 
 object AWS {
@@ -47,7 +51,6 @@ object AWS {
     }
 
 
-    @Synchronized
     fun getPredicate(predicate:QueryPredicate, c: Class<out Model>, onComplete:(res:PredicateResponse) -> Unit){
         Amplify.DataStore.query(
             c, Where.matchesAndSorts(predicate, listOf(QuerySortBy("createdAt",QuerySortOrder.DESCENDING))),
@@ -60,7 +63,7 @@ object AWS {
         )
     }
 
-    @Synchronized
+
     fun save(model: Model, onComplete:(res:Response) -> Unit){
         Amplify.DataStore.save(model,
             {
@@ -68,6 +71,7 @@ object AWS {
             },
             {
                 it.localizedMessage?.let { it1 -> onComplete(Response(false,null,it1)) }
+                amplifyRetry()
             }
         )
 
@@ -77,14 +81,21 @@ object AWS {
         Amplify.Auth?.currentUser?.userId
     }
 
+    fun amplifyRetry(){
+        Amplify.DataStore.stop({
+            CoroutineScope(Dispatchers.IO).launch {
+                delay(5000)
+                Amplify.DataStore.start({},{})
+        }},{})
+    }
 
     fun hub(){
         Amplify.Hub.subscribe(
             HubChannel.DATASTORE,
-            { it.name == DataStoreChannelEventName.OUTBOX_MUTATION_PROCESSED.toString()
-                    || it.name == DataStoreChannelEventName.OUTBOX_MUTATION_FAILED.toString() },
+            { it.name == DataStoreChannelEventName.OUTBOX_MUTATION_FAILED.toString() },
             {
                 Log.i("MyAmplifyApp", "User has a network connection? ")
+                amplifyRetry()
             }
         )
         Amplify.Hub.subscribe(HubChannel.AUTH,
@@ -100,36 +111,5 @@ object AWS {
                 )
             }
         )
-    }
-}
-
-fun initAws (onSuccess : ()->Unit){
-    try{
-        val datastorePlugin = AWSDataStorePlugin.builder().run {
-            dataStoreConfiguration(
-                DataStoreConfiguration.builder()
-                    .doSyncRetry(true)
-                    .syncInterval(60000,TimeUnit.MILLISECONDS)
-                    .errorHandler {
-                        Amplify.DataStore.stop({
-                            Amplify.DataStore.start({},{})
-                        },{})
-                    }
-                    .build()
-
-            ).build()
-        }
-        Amplify.addPlugin(datastorePlugin)
-        Amplify.addPlugin(AWSApiPlugin())
-
-        Amplify.addPlugin(AWSCognitoAuthPlugin())
-        Amplify.configure(App.INSTANCE)
-        AWS.hub()
-        onSuccess()
-    }catch (e: AmplifyException){
-        if (e is Amplify.AlreadyConfiguredException) {
-            onSuccess()
-            return
-        }
     }
 }

@@ -2,12 +2,13 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'com.google.gms.google-services'
+    id 'com.google.firebase.crashlytics'
 }
 apply plugin: 'kotlin-android'
 
 android {
     compileSdk 32
-    buildToolsVersion "32.1.0-rc1"
+    buildToolsVersion "30.0.3"
 
     signingConfigs {
         release {
@@ -33,7 +34,7 @@ android {
     buildTypes {
         release {
             minifyEnabled true
-//            shrinkResources true
+            shrinkResources true
             proguardFile getDefaultProguardFile('proguard-android-optimize.txt')
             proguardFile 'proguard-rules.pro'
         }
@@ -87,4 +88,8 @@ dependencies {
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     implementation "androidx.core:core-ktx:1.7.0"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21"
+
+    implementation platform('com.google.firebase:firebase-bom:28.1.0')
+    implementation 'com.google.firebase:firebase-crashlytics-ktx'
+    implementation 'com.google.firebase:firebase-analytics-ktx'
 }
