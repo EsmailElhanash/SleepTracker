@@ -1,6 +1,7 @@
 package com.example.sleeptracker.ui
 
 import android.annotation.SuppressLint
+import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -16,8 +17,10 @@ import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.amplifyframework.core.Amplify
 import com.amplifyframework.core.Amplify.DataStore
+import com.example.sleeptracker.App
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.androidservices.AlarmService
 import com.example.sleeptracker.background.androidservices.SurveyService
@@ -49,10 +52,10 @@ class HomeActivity : AppCompatActivity() {
 
 
         Intent(applicationContext, AlarmService::class.java).also {
-            startService(it)
+            ContextCompat.startForegroundService(applicationContext,it)
         }
         Intent(applicationContext, SurveyService::class.java).also {
-            startService(it)
+            ContextCompat.startForegroundService(applicationContext,it)
         }
 
 
@@ -63,11 +66,37 @@ class HomeActivity : AppCompatActivity() {
         }
 
         try {
-            checkDisabledBatteryOptimizationPermission()
-
+            checkDisabledBatteryOptimizationPermission{
+                checkExactAlarmPermission()
+            }
         }catch (e:IllegalStateException){
 
         }
+
+
+//         crash test!!
+//        CoroutineScope(Dispatchers.IO).launch {
+//            delay(10000)
+//            App.crash()
+//        }
+    }
+
+    private fun checkExactAlarmPermission() {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val canScheduleExactAlarms = alarmManager.canScheduleExactAlarms()
+            if (!canScheduleExactAlarms){
+                requestScheduleExactAlarms()
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    private fun requestScheduleExactAlarms(){
+        val intent = Intent()
+        intent.action = Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+        intent.data = Uri.parse("package:$packageName")
+        startActivity(intent)
     }
 
     override fun onResume() {
@@ -98,20 +127,25 @@ class HomeActivity : AppCompatActivity() {
     }
 
 
-    private fun checkDisabledBatteryOptimizationPermission(){
+    private fun checkDisabledBatteryOptimizationPermission(onComplete:()->Unit){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!isIgnoringBatteryOptimizations()) {
-                showBatteryOptimizationDisableDialog()
-            }
+                showBatteryOptimizationDisableDialog{
+                    onComplete()
+                }
+            }else onComplete()
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun showBatteryOptimizationDisableDialog() {
+    private fun showBatteryOptimizationDisableDialog(onComplete:()->Unit) {
         val myDialog = AlertDialog.Builder(this)
             .setMessage(R.string.BatteryOptimizationDisableRequest)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 requestBatteryOptimizationDisable()
+            }
+            .setOnDismissListener {
+                onComplete()
             }
             .setCancelable(false)
             .create()
@@ -152,7 +186,7 @@ class HomeActivity : AppCompatActivity() {
         UserModel().getSurveyLastUpdatedCaseOne{
             user.getSurveyRetakePeriod { retakePeriod ->
                 try {
-                    if (nowMS >= (it + retakePeriod * DAY_IN_MS)) {
+                    if (nowMS >= (it + retakePeriod * DAY_IN_MS)) { //DONE... todo CRITICAL!!! ATTENTION CHANGE TO >=
                         val i = Intent(this, SurveyActivity::class.java)
                         i.putExtra(SurveyActivity.SURVEY_CASE_EXTRA, SurveyActivity.SURVEY_CASE_1)
                         startActivity(i)

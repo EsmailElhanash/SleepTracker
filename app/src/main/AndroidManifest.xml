@@ -6,7 +6,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="android.permission.REQUEST_COMPANION_RUN_IN_BACKGROUND"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
@@ -32,9 +31,13 @@
             android:exported="true" />
 
         <service
+            android:enabled="true"
+            android:exported="true"
             android:name=".background.androidservices.SurveyService"
             android:permission="android.permission.FOREGROUND_SERVICE" />
         <service
+            android:enabled="true"
+            android:exported="true"
             android:name=".background.androidservices.AlarmService"
             android:permission="android.permission.FOREGROUND_SERVICE" />
         <service

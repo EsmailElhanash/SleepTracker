@@ -10,11 +10,12 @@ import android.os.Build
 import android.os.IBinder
 import com.amplifyframework.core.model.Model
 import com.amplifyframework.core.model.query.Where
-import com.amplifyframework.core.model.temporal.Temporal
+import com.amplifyframework.core.model.query.predicate.QueryPredicate
 import com.amplifyframework.datastore.generated.model.TrackerPeriod
 import com.example.sleeptracker.R
 import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.background.receivers.SurveyAlarmReceiver
+import com.example.sleeptracker.initAws
 import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.utils.LAST_SURVEY_NOTIFICATION
@@ -22,6 +23,7 @@ import com.example.sleeptracker.utils.PREFERENCES_NAME
 import com.example.sleeptracker.utils.androidutils.NotificationType
 import com.example.sleeptracker.utils.androidutils.NotificationsManager
 import com.example.sleeptracker.utils.time.DAY_IN_MS
+import com.example.sleeptracker.utils.time.TimeUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -29,34 +31,40 @@ import kotlinx.coroutines.launch
 import java.util.*
 
 const val SURVEY_ALARM_ID = 12321
-private const val DISPLAYABLE_DAYS_COUNT = 7
 
 class SurveyService : Service() {
 
     private var isForeground: Boolean = false
     private lateinit var user : UserModel
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        user = UserModel()
-        goForeGround()
-        scheduleSurveyCheck()
-        CoroutineScope(Dispatchers.IO).launch {
-            checkSurveyConditionOne{
-                checkSurveyConditionTwo {
-                    stopForeground()
+        initAws(this){
+            user = UserModel()
+            goForeGround()
+            scheduleSurveyCheck()
+            CoroutineScope(Dispatchers.IO).launch {
+                checkSurveyConditionOne {
+                    when (it) {
+                        28 -> checkSurveyConditionTwo {
+                            stopForeground()
+                        }
+                        else -> stopForeground()
+                    }
                 }
+                delay(60000)
+                if (isForeground) stopForeground()
             }
-            delay(60000)
-            if (isForeground) stopForeground()
         }
 
         return START_NOT_STICKY
     }
-    private fun checkSurveyConditionOne(onComplete: (() -> Unit)){
+    private fun checkSurveyConditionOne(onComplete: ((retake: Int) -> Unit)){
         val nowMS = Calendar.getInstance().timeInMillis
         val pref = applicationContext.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
         val lastNotification = pref.getLong(LAST_SURVEY_NOTIFICATION, 0)
         if (nowMS<=lastNotification + DAY_IN_MS){
-            onComplete()
+            user.getSurveyRetakePeriod {
+                onComplete(it)
+            }
             return
         }
 
@@ -67,8 +75,8 @@ class SurveyService : Service() {
                         NotificationsManager.displaySurveyNotification(applicationContext)
                         pref.edit().putLong(LAST_SURVEY_NOTIFICATION, nowMS).apply()
                     }
-                    onComplete()
-                } catch (e: Exception) {onComplete()}
+                    onComplete(retake)
+                } catch (e: Exception) {onComplete(retake)}
             }
         }
 
@@ -92,67 +100,57 @@ class SurveyService : Service() {
                 val lastIndex = movementCountList.size - 1
                 if (lastIndex >= 4) {
                     shouldShowConditionTwoNotification =
-                        movementCountList[lastIndex] >=3 &&
-                                movementCountList[lastIndex - 1] >=3 &&
-                                +movementCountList[lastIndex - 2] >=3 &&
-                                movementCountList[lastIndex - 3] >=3 &&
-                                movementCountList[lastIndex - 4] >=3
+                        movementCountList[lastIndex    ] >=3 &&
+                        movementCountList[lastIndex - 1] >=3 &&
+                        movementCountList[lastIndex - 2] >=3 &&
+                        movementCountList[lastIndex - 3] >=3 &&
+                        movementCountList[lastIndex - 4] >=3
                 }
             }
 
             for ((_, count) in sortedDisturbancesCount) {
                 disturbancesCountList.add(count)
                 val lastIndex = disturbancesCountList.size - 1
-                if (lastIndex >= 4) {
-                    val last5Count = disturbancesCountList[lastIndex] +
+                if (lastIndex >= 4) { // todo CRITICAL CHANGE BACK TO 4 NOT 0
+                    val last5Count =
+                            disturbancesCountList[lastIndex    ] +
                             disturbancesCountList[lastIndex - 1] +
-                            +disturbancesCountList[lastIndex - 2] +
+                            disturbancesCountList[lastIndex - 2] +
                             disturbancesCountList[lastIndex - 3] +
                             disturbancesCountList[lastIndex - 4]
                     if (last5Count >= 3) shouldShowConditionTwoNotification = true
                 }
             }
-            if (shouldShowConditionTwoNotification) {
-                user.getSurveyLastUpdatedCaseOne{ last1->
-                    user.getSurveyLastUpdatedCaseTwo { last2 ->
-                        user.getSurveyRetakePeriod { retake ->
-                            if (nowMS >= (last1 + retake * DAY_IN_MS)) {
-                                if (nowMS >= (last2 + retake * DAY_IN_MS)){
-                                    NotificationsManager.showSurveyConditionTwoNotification(this)
-                                }
-                            }
-                        }
-                        onComplete()
-                    }
-                }
+            if (shouldShowConditionTwoNotification) {// todo CRITICAL CHANGE BACK TO shouldShowConditionTwoNotification NOT !shouldShowConditionTwoNotification
+                NotificationsManager.showSurveyConditionTwoNotification(this)
+                onComplete()
+            }else {
+                onComplete()
             }
 
-            onComplete()
         }
 
         val checkDate = { c1:Long , c2:Long ->
-            user.getSurveyRetakePeriod {
-                if (nowMS > c1 + 7 * DAY_IN_MS && nowMS > c2 + it * DAY_IN_MS) {
-                    getPeriodsData{
-                        it?.forEach let@{ model ->
-                            if (model !is TrackerPeriod) return@let
-                            val ms = model.createdAt?.toDate()?.time
-                            try {
-                                val count = model.disturbancesCount.toInt()
-                                sortedDisturbancesCount[ms]=count
-                            }catch (e:Exception){}
+            if (nowMS > c1 + 7 * DAY_IN_MS && nowMS > c2 + 28 * DAY_IN_MS) { // TODO CHANGE BACK first 0 TO 7 second 0 to 28
+                getPeriodsData{ periods ->
+                    periods?.forEach let@{ model ->
+                        if (model !is TrackerPeriod) return@let
+                        val ms = model.createdAt?.toDate()?.time
+                        try {
+                            val count = model.disturbancesCount.toInt()
+                            sortedDisturbancesCount[ms]=count
+                        }catch (e:Exception){}
 
-                            try {
-                                val count = model.averageMovementCount.toInt()
-                                sortedMovementCount[ms]=count
-                            }catch (e:Exception){}
-                        }
-
-                        checkCondition()
+                        try {
+                            val count = model.averageMovementCount.toInt()
+                            sortedMovementCount[ms]=count
+                        }catch (e:Exception){}
                     }
-                } else {
-                    onComplete()
-                }
+
+                    checkCondition()
+            }
+            } else {
+                onComplete()
             }
          }
 
@@ -169,22 +167,26 @@ class SurveyService : Service() {
     }
 
     private fun getPeriodsData(onComplete: (trackerPeriods: List<Model>?) -> Unit){
-        val range = getPeriodsRange()
+        val periodsIDs = getPeriodsIDs()
+        var predicates : QueryPredicate = Where.matches(TrackerPeriod.ID.beginsWith(periodsIDs.first())).queryPredicate
+
+        periodsIDs.forEach { pid ->
+            predicates = predicates.or(TrackerPeriod.ID.beginsWith(pid))
+        }
+
         AWS.getPredicate(
-            Where.matches(
-                TrackerPeriod.CREATED_AT.between(range.first,range.second)
-            ).queryPredicate,
+            predicates,
             TrackerPeriod::class.java
         ){
             onComplete(it.data)
         }
     }
 
-    private fun getPeriodsRange() : Pair<String,String> {
-        val nowMS = Calendar.getInstance().timeInMillis
-        val st = Temporal.DateTime(Date(nowMS),0).toString()
-        val ed = Temporal.DateTime(Date(nowMS- 7 * DAY_IN_MS),0).toString()
-        return Pair(st,ed)
+    private fun getPeriodsIDs() : Array<String> {
+        val nowMS = Calendar.getInstance().timeInMillis - DAY_IN_MS
+        return Array(7) {
+            TimeUtil.getIDSimpleFormat(nowMS - (it * DAY_IN_MS))
+        }
     }
 
     @SuppressLint("UnspecifiedImmutableFlag")

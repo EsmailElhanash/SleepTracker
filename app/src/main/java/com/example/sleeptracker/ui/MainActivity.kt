@@ -16,17 +16,12 @@ import com.amplifyframework.datastore.generated.model.User
 import com.example.sleeptracker.BuildConfig
 import com.example.sleeptracker.R
 import com.example.sleeptracker.aws.AWS
-import com.example.sleeptracker.aws.initAws
 import com.example.sleeptracker.database.utils.DBParameters.CONSENT_ACCEPTED
+import com.example.sleeptracker.initAws
 import com.example.sleeptracker.ui.signin.LoginActivity
-import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity()  {
-
-
-
-//    private lateinit var auth: FirebaseAuth
 
     companion object {
         var TEST = BuildConfig.DEBUG
@@ -37,10 +32,8 @@ class MainActivity : AppCompatActivity()  {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        initAws(this) {
 
-
-
-        initAws{
             val uid = Amplify.Auth?.currentUser?.userId
             Log.d(TAG, "onCreate: $uid")
             if (uid==null){

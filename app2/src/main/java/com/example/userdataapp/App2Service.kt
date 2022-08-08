@@ -3,6 +3,7 @@ package com.example.userdataapp
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
 class App2Service : Service() {
@@ -23,6 +24,7 @@ class App2Service : Service() {
                 val signUpService = Intent(applicationContext,SignUpService::class.java)
                 signUpService.putExtras(intent)
                 startService(signUpService)
+                Log.d("App2Service", "starting signup result")
             }
             SIGN_UP_RESULT -> {
                 val errors = intent.getStringExtra(SIGN_UP_ERROR)
@@ -36,6 +38,7 @@ class App2Service : Service() {
                     resultIntent.putExtra(SID,sid)
                 }
 
+                Log.d("App2Service", "broadcasting result: $errors")
                 LocalBroadcastManager.getInstance(this).sendBroadcast(resultIntent)
             }
         }

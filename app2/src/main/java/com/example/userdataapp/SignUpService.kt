@@ -65,6 +65,7 @@ class SignUpService : Service() {
                                 {
                                     onSuccess(id)
                                 }, { exc ->
+                                    Log.d("SignUpService", "signup exception: $exc")
                                     exc.localizedMessage?.let { it1 -> onFailure(it1) } ?: onFailure("error occurred")
                                 }
                                 )
@@ -72,11 +73,13 @@ class SignUpService : Service() {
                             onFailure("Sign in error occurred")
                         }
                     }, {
+                        Log.d("SignUpService", "signup exception: $it")
                         it.localizedMessage?.let { it1 -> onFailure(it1) } ?: onFailure("error occurred")
                         }
                     )
 
                 },{
+                    Log.d("SignUpService", "signup exception: $it")
                     it.localizedMessage?.let { it1 -> onFailure(it1) } ?: onFailure("error occurred")
                 }
             )
@@ -110,10 +113,14 @@ class SignUpService : Service() {
         try{
             Amplify.addPlugin(AWSApiPlugin())
             Amplify.addPlugin(AWSCognitoAuthPlugin())
-            Amplify.configure(AmplifyConfiguration.fromConfigFile(applicationContext, R.raw.amplifyconfiguration2),applicationContext)
+            Amplify.configure(AmplifyConfiguration.fromConfigFile(this, R.raw.amplifyconfiguration2),this)
             Log.d("configureAws", "succ")
             onSuccess()
         }catch (e: AmplifyException){
+            if (e is Amplify.AlreadyConfiguredException) {
+                onSuccess()
+                return
+            }
             Log.d("configureAws", "configureAws: ${e.message}")
             Toast.makeText(this,"Error Occurred" , Toast.LENGTH_SHORT).show()
         }

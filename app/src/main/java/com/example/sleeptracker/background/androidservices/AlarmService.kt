@@ -10,14 +10,17 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import androidx.core.content.ContextCompat
+import com.example.sleeptracker.App
 import com.example.sleeptracker.R
-import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.background.receivers.AlarmReceiver
-import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.database.utils.DBParameters.DAYS
+import com.example.sleeptracker.initAws
+import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.objects.DaysGroup
 import com.example.sleeptracker.objects.TimePoint
-import com.example.sleeptracker.utils.*
+import com.example.sleeptracker.ui.MainActivity
+import com.example.sleeptracker.utils.MINUTE_IN_MS
 import com.example.sleeptracker.utils.androidutils.NotificationType
 import com.example.sleeptracker.utils.androidutils.NotificationsManager
 import com.example.sleeptracker.utils.time.DAY_IN_MS
@@ -26,7 +29,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.text.DateFormatSymbols
 import java.util.*
 
 
@@ -34,11 +36,13 @@ class AlarmService : Service() {
     private var isForeground: Boolean = false
     private lateinit var user: UserModel
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        user = UserModel()
-        if(!isForeground)  prepareAlarmStartTime()
-        else {
-            stopForeground()
-            prepareAlarmStartTime()
+        initAws(this) {
+            user = UserModel()
+            if (!isForeground) prepareAlarmStartTime()
+            else {
+                stopForeground()
+                prepareAlarmStartTime()
+            }
         }
         return START_NOT_STICKY
     }
@@ -69,7 +73,6 @@ class AlarmService : Service() {
     }
 
     @SuppressLint("UnspecifiedImmutableFlag")
-    @Synchronized
     private fun setAlarm(workDaysGroup: DaysGroup,offDaysGroup: DaysGroup){
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         if (alarmManager != null) {
@@ -122,7 +125,7 @@ class AlarmService : Service() {
                 }
             }
         }
-        applicationContext?.startService(
+        ContextCompat.startForegroundService(applicationContext,
             Intent(applicationContext, TrackerService::class.java)
         )
         stopForeground()
