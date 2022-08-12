@@ -12,6 +12,7 @@ import com.amplifyframework.core.model.query.predicate.QueryPredicate
 import com.amplifyframework.datastore.generated.model.TrackerPeriod
 import com.example.sleeptracker.R
 import com.example.sleeptracker.aws.AWS
+import com.example.sleeptracker.ui.MainActivity.Companion.TEST
 import com.example.sleeptracker.utils.time.DAY_IN_MS
 import com.example.sleeptracker.utils.time.IDFormatter
 import com.example.sleeptracker.utils.time.TimeUtil
@@ -21,9 +22,12 @@ import com.google.android.material.tabs.TabLayoutMediator
 import java.util.*
 import kotlin.collections.ArrayList
 
-private const val DISPLAYABLE_DAYS_COUNT = 7
 
+
+@Suppress("PrivatePropertyName")
 class DayPagingFragment : Fragment() {
+    private val DISPLAYABLE_DAYS_COUNT = if (TEST) 100 else 7
+
     private lateinit var pagingAdapter : PagingAdapter
     private lateinit var viewPager: ViewPager2
 
@@ -63,7 +67,7 @@ class DayPagingFragment : Fragment() {
                 pagingAdapter.shots.addAll(shots)
                 pagingAdapter.notifyDataSetChanged()
                 TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-                    tab.text = IDFormatter.getID(pagingAdapter.shots[position].createdAt.toDate().time)
+                    tab.text = pagingAdapter.shots[position].id.split("-")[0]
                 }.attach()
                 loadingBar.visibility = View.GONE
             }
