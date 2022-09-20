@@ -3,7 +3,6 @@
   "serviceConfiguration": {
     "apiName": "appone",
     "serviceName": "AppSync",
-    "gqlSchemaPath": "/tmp/amplify-60d61d1b-e5c9-46df-bcbc-ae0031bfd013/amplify/backend/api/appone/schema.graphql",
     "defaultAuthType": {
       "mode": "AMAZON_COGNITO_USER_POOLS",
       "cognitoUserPoolId": "authappone"

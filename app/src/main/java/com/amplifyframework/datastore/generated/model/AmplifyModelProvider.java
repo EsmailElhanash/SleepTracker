@@ -7,7 +7,7 @@ import com.amplifyframework.core.model.ModelProvider;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-/** 
+/**
  *  Contains the set of model classes that implement {@link Model}
  * interface.
  */
@@ -26,9 +26,9 @@ public final class AmplifyModelProvider implements ModelProvider {
     return amplifyGeneratedModelInstance;
   }
   
-  /** 
+  /**
    * Get a set of the model classes.
-   * 
+   *
    * @return a set of the model classes.
    */
   @Override
@@ -41,9 +41,9 @@ public final class AmplifyModelProvider implements ModelProvider {
         
   }
   
-  /** 
+  /**
    * Get the version of the models.
-   * 
+   *
    * @return the version string of the models.
    */
   @Override
