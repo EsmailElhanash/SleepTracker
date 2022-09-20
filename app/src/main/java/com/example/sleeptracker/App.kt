@@ -19,6 +19,7 @@ import com.amplifyframework.core.AmplifyConfiguration
 import com.amplifyframework.datastore.AWSDataStorePlugin
 import com.amplifyframework.datastore.DataStoreConfiguration
 import com.amplifyframework.datastore.DataStoreConflictHandler
+import com.amplifyframework.datastore.appsync.AppSync
 import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.background.androidservices.AlarmService
 import com.example.sleeptracker.background.androidservices.SurveyService
@@ -61,10 +62,12 @@ class App : Application() {
 fun initAws (context:Context , onSuccess : ()->Unit){
     try{
         val datastorePlugin = AWSDataStorePlugin.builder().run {
+
             dataStoreConfiguration(
                 DataStoreConfiguration.builder()
                     .doSyncRetry(true)
-                    .syncInterval(2,TimeUnit.MINUTES)
+                    .syncInterval(5,TimeUnit.MINUTES)
+                    .syncPageSize(50)
                     .conflictHandler { c, onDecision ->
                         Log.d("datastore init", "conflict: $c")
                         onDecision.accept(DataStoreConflictHandler.ConflictResolutionDecision.retryLocal())
@@ -85,8 +88,6 @@ fun initAws (context:Context , onSuccess : ()->Unit){
             AmplifyConfiguration.fromConfigFile(context,R.raw.amplifyconfiguration),context
         )
         AWS.hub()
-
-
 
         onSuccess()
     }catch (e: AmplifyException){
