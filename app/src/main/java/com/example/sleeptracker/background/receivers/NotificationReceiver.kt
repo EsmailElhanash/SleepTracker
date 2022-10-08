@@ -61,7 +61,7 @@ class NotificationReceiver : BroadcastReceiver() {
     }
 
     private fun saveLastCondition2(took:String){
-        val uid = AWS.uid?:return
+        val uid = AWS.uid()?:return
         val nowMS = Calendar.getInstance().timeInMillis
 
         AWS.get(uid, User::class.java){

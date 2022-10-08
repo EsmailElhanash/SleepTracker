@@ -31,13 +31,13 @@ class UserModel : ViewModel() {
         private const val TAG = "UserModel"
     }
     init {
-        AWS.uid?.let {
+        AWS.uid()?.let {
             loadUser(it){}
         }
     }
 
     fun init (){
-        AWS.uid?.let {
+        AWS.uid()?.let {
             loadUser(it){}
         }
     }
@@ -46,7 +46,7 @@ class UserModel : ViewModel() {
         val retakePeriod = surveyRetakePeriod
         if (retakePeriod!=null) onComplete(retakePeriod)
         else {
-            AWS.uid?.let {
+            AWS.uid()?.let {
                 loadUser(it){
                     val retakePeriod2 = surveyRetakePeriod
                     if (retakePeriod2!=null) onComplete(retakePeriod2)
@@ -59,7 +59,7 @@ class UserModel : ViewModel() {
         val last = surveyLastUpdated
         if (last!=null) onComplete(last)
         else {
-            AWS.uid?.let {
+            AWS.uid()?.let {
                 loadUser(it){
                     val last2 = surveyLastUpdated
                     if (last2!=null) onComplete(last2)
@@ -72,7 +72,7 @@ class UserModel : ViewModel() {
         val last = surveyLastUpdated2
         if (last!=null) onComplete(last)
         else {
-            AWS.uid?.let {
+            AWS.uid()?.let {
                 loadUser(it){
                     val last2 = surveyLastUpdated2
                     if (last2!=null) onComplete(last2)
@@ -85,7 +85,7 @@ class UserModel : ViewModel() {
         val wd = workDays.value
         if (wd!=null) send(wd)
         else {
-            AWS.uid?.let {
+            AWS.uid()?.let {
                 loadUser(it){
                     workDays.value?.let{wd->send(wd)}
                 }
@@ -97,7 +97,7 @@ class UserModel : ViewModel() {
         val od = offDays.value
         if (od!=null) send(od)
         else {
-            AWS.uid?.let {
+            AWS.uid()?.let {
                 loadUser(it){
                     offDays.value?.let{od->send(od)}
                 }
@@ -106,7 +106,7 @@ class UserModel : ViewModel() {
     }
 
     fun updateConsent(v:String,onSuccess:()->Unit,onFailure:()->Unit) {
-        val id = AWS.uid
+        val id = AWS.uid()
         if (id == null) {
             onFailure()
             return
@@ -124,7 +124,7 @@ class UserModel : ViewModel() {
 
     fun getSleepPeriodCallBack(re:Int? = 0,callback: ((periods: List<Period>) -> Unit)) {
         Log.d(TAG, "getSleepPeriodCallBack: ")
-        val uid = AWS.uid ?: return
+        val uid = AWS.uid() ?: return
         loadUser(uid) {
             val wd = workDays.value
             val od = offDays.value

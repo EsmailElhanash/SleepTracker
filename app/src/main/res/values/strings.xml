@@ -76,6 +76,9 @@
     <string name="day7">Friday</string>
     <string name="choose_your_workdays">Choose what is your working days:</string>
     <string name="thanks_for_participating_text">Thank you for particpating in our study using Sleep Tracker app, if you think you have anxiety or depression, please visit students, health GP</string>
+
+    <string name="exit_dialog">Sorry you can\'t continue</string>
+
     <string name="editWorkDays">Edit Work Days</string>
     <string name="checking_survey">Checking survey date</string>
     <string name="white">White</string>
@@ -99,36 +102,48 @@
 
     <string name="what_is_your_ethnic_groups">What is your ethnic groups?</string>
 
-    <string name="consent">
-
-        <b>Do you confirm that you:</b> <br />\n
-• Are between the ages of 18 and 25 years old<br />\n
-• Use an Android smartphone<br />\n
-• Have no history of, or receiving treatment for, anxiety or depression<br />\n
-<b>I understand that in this study I will be asked to:</b><br />\n
-• Install the Sleep-Tracker app onto my smartphone<br />\n
-• Allow the Sleep-Tracker app to run in the background of my phone for the duration
-of this
-study (8 weeks)<br />\n
-• Complete questionnaires regarding sleep and mood at different time-points in the study
-period<br />\n
-• Complete a short survey at the end of the study period<br />\n
-• Participate in a short interview, if invited<br />\n
-<b>Have you:</b><br />\n
-• Been given information explaining the study?<br />\n
-• Had an opportunity to ask questions and discuss the study?<br />\n
-• Received satisfactory answers to all questions you asked?<br />\n
-• Received enough information about the study for you to make a decision about your
-participation?<br />\n
-<b>Do you understand</b><br />\n
-That you are free to withdraw from the study and free to withdraw your data prior to
-finishing the study <br />\n
-• At any time<br />\n
-• Without giving a reason for withdrawing
-
+    <string name="consent_headline_1">
+        <b>Do you confirm that you:</b>
     </string>
+
+    <string name="consent_question_1">• Are between the ages of 18 and 25 years old</string>
+
+    <string name="consent_question_2">• Use an Android smartphone</string>
+
+    <string name="consent_question_3">• Have no history of, or receiving treatment for, anxiety or depression</string>
+    <string name="consent_question_4">• Are a student at UoB</string>
+
+    <string name="consent_headline_2">
+        <b>I understand that in this study I will be asked to:</b>
+    </string>
+
+    <string name="consent_question_5">• Install the Sleep-Tracker app onto my smartphone</string>
+    <string name="consent_question_6">• Allow the Sleep-Tracker app to run in the background of my phone for the duration
+        of this study (8 weeks)</string>
+    <string name="consent_question_7">• Complete questionnaires regarding sleep and mood at different time-points in the study
+        period</string>
+    <string name="consent_question_8">• Complete a short survey at the end of the study period</string>
+    <string name="consent_question_9">• Participate in a short interview, if invited</string>
+
+    <string name="consent_headline_3">
+        <b>Have you:</b>
+    </string>
+
+    <string name="consent_question_10">• Been given information explaining the study?</string>
+    <string name="consent_question_11">• Had an opportunity to ask questions and discuss the study?</string>
+    <string name="consent_question_12">• Received satisfactory answers to all questions you asked?</string>
+    <string name="consent_question_13">• Received enough information about the study for you to make a decision about your
+        participation?</string>
+
+    <string name="consent_question_14">That you are free to withdraw from the study and free to withdraw your data prior to
+        finishing the study <br />\n• At any time<br />\n• Without giving a reason for withdrawing
+    </string>
+
+
     <string name="accept_consent">Accept</string>
     <string name="decline_consent">Decline</string>
     <string name="loading">Loading</string>
     <string name="old_password">Old Password</string>
+    <string name="yes">yes</string>
+    <string name="no">no</string>
 </resources>
