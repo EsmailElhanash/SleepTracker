@@ -244,7 +244,7 @@ class SurveyActivity : AppCompatActivity() {
     }
 
     private fun saveAnswers() {
-        val uid = AWS.uid?:return
+        val uid = AWS.uid()?:return
         val message = "Saving answers"
         Toast.makeText(applicationContext,message,Toast.LENGTH_LONG).show()
 

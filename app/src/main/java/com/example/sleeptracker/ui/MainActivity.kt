@@ -3,6 +3,7 @@ package com.example.sleeptracker.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.JsonReader
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -19,6 +20,8 @@ import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.database.utils.DBParameters.CONSENT_ACCEPTED
 import com.example.sleeptracker.initAws
 import com.example.sleeptracker.ui.signin.LoginActivity
+import com.google.gson.JsonObject
+import org.json.JSONObject
 
 
 class MainActivity : AppCompatActivity()  {
@@ -26,14 +29,13 @@ class MainActivity : AppCompatActivity()  {
     companion object {
         var TEST = BuildConfig.DEBUG
         const val TAG  = "MainActivity"
-        const val c  = 211
+        const val c  = 20015566778899
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         initAws(this) {
-
             val uid = Amplify.Auth?.currentUser?.userId
             Log.d(TAG, "onCreate: $uid")
             if (uid==null){
@@ -45,10 +47,19 @@ class MainActivity : AppCompatActivity()  {
                 AWS.get(uid,User::class.java){
                     Log.d(TAG, "onCreate: ${it.success}")
                     val u = it.data as User
-                    if (u.consent == CONSENT_ACCEPTED){
-                        val intent = Intent(this, HomeActivity::class.java)
-                        startActivity(intent)
-                    }else {
+                    try{
+                        JSONObject(u.consent).get(
+                            "consent"
+                        ).let { c ->
+                            if (c == CONSENT_ACCEPTED) {
+                                val intent = Intent(this, HomeActivity::class.java)
+                                startActivity(intent)
+                            } else {
+                                val intent = Intent(this, ConsentActivity::class.java)
+                                startActivity(intent)
+                            }
+                        }
+                    }catch (e:Exception) {
                         val intent = Intent(this, ConsentActivity::class.java)
                         startActivity(intent)
                     }

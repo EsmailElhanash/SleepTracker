@@ -4,6 +4,7 @@ import android.util.Log
 import com.amplifyframework.AmplifyException
 import com.amplifyframework.api.aws.AWSApiPlugin
 import com.amplifyframework.api.aws.AuthModeStrategyType
+import com.amplifyframework.api.graphql.model.ModelMutation
 import com.amplifyframework.auth.AuthChannelEventName
 import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin
 import com.amplifyframework.core.Amplify
@@ -77,9 +78,22 @@ object AWS {
 
     }
 
-    val uid by lazy {
-        Amplify.Auth?.currentUser?.userId
+    fun saveINS(model: Model, onComplete:(res:Response) -> Unit){
+        Amplify.API.mutate(ModelMutation.create(model),
+            {
+                onComplete(Response(true,it.data,null))
+            },
+            {
+                it.localizedMessage?.let { it1 -> onComplete(Response(false,null,it1)) }
+                amplifyRetry()
+            }
+        )
+
     }
+
+    fun uid () =
+        Amplify.Auth?.currentUser?.userId
+
 
     fun amplifyRetry(){
         Amplify.DataStore.stop({

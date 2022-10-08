@@ -6,17 +6,22 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.children
 import com.example.sleeptracker.R
 import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.database.utils.DBParameters.CONSENT_ACCEPTED
 import com.example.sleeptracker.database.utils.DBParameters.CONSENT_DECLINED
 import com.example.sleeptracker.databinding.ActivityConsentBinding
 import com.example.sleeptracker.ui.survey.SurveyActivity
+import com.google.gson.JsonObject
+import org.json.JSONObject
 
 class ConsentActivity : AppCompatActivity() {
 
@@ -29,23 +34,140 @@ class ConsentActivity : AppCompatActivity() {
         binding = ActivityConsentBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.acceptConsent.setOnClickListener {
+        binding.next.setOnClickListener let@{
+            if (!isAllQuestionAnswered()) {
+                Toast.makeText(this,"please answer all questions",Toast.LENGTH_SHORT).show()
+                return@let
+            }
             showProgressIndicator()
-            user.updateConsent(CONSENT_ACCEPTED,{
+            user.updateConsent(getConsentAnswer(),run@{
+                if (!isConsentAccepted()){
+                    runOnUiThread { showExitDialog() }
+                    return@run
+                }
                 runOnUiThread{ showThanksDialog() }
             },{
                 onFailure("error occurred")
             })
         }
+    }
 
-        binding.declineConsent.setOnClickListener {
-            showProgressIndicator()
-            user.updateConsent(CONSENT_DECLINED,{
+    private fun isConsentAccepted() : Boolean {
+        return findViewById<RadioButton>(binding.q1Radio.checkedRadioButtonId).text.toString() == "yes"
+                && findViewById<RadioButton>(binding.q2Radio.checkedRadioButtonId).text.toString() == "yes"
+                && findViewById<RadioButton>(binding.q3Radio.checkedRadioButtonId).text.toString() == "yes"
+                && findViewById<RadioButton>(binding.q4Radio.checkedRadioButtonId).text.toString() == "yes"
+
+    }
+
+    private fun isAllQuestionAnswered() : Boolean =
+                    binding.q1Radio.checkedRadioButtonId != -1
+                &&  binding.q2Radio.checkedRadioButtonId != -1
+                &&  binding.q3Radio.checkedRadioButtonId != -1
+                &&  binding.q4Radio.checkedRadioButtonId != -1
+                &&  binding.q5Radio.checkedRadioButtonId != -1
+                &&  binding.q6Radio.checkedRadioButtonId != -1
+                &&  binding.q7Radio.checkedRadioButtonId != -1
+                &&  binding.q8Radio.checkedRadioButtonId != -1
+                &&  binding.q9Radio.checkedRadioButtonId != -1
+                &&  binding.q10Radio.checkedRadioButtonId != -1
+                &&  binding.q11Radio.checkedRadioButtonId != -1
+                &&  binding.q12Radio.checkedRadioButtonId != -1
+                &&  binding.q13Radio.checkedRadioButtonId != -1
+                &&  binding.q14Radio.checkedRadioButtonId != -1
+
+
+    private fun getConsentAnswer(): String {
+        return JSONObject().apply {
+            val res = if (isConsentAccepted()) CONSENT_ACCEPTED else CONSENT_DECLINED
+            put("consent",res)
+
+            findViewById<RadioButton>(binding.q1Radio.checkedRadioButtonId).text.toString().apply {
+                put(binding.q1Text.text.toString(),this)
+            }
+
+
+            findViewById<RadioButton>(binding.q2Radio.checkedRadioButtonId).text.toString().apply {
+                put(binding.q2Text.text.toString(),this)
+            }
+
+
+            findViewById<RadioButton>(binding.q3Radio.checkedRadioButtonId).text.toString().apply {
+                put(binding.q3Text.text.toString(),this)
+            }
+
+
+            findViewById<RadioButton>(binding.q4Radio.checkedRadioButtonId).text.toString().apply {
+                put(binding.q4Text.text.toString(),this)
+            }
+
+
+            findViewById<RadioButton>(binding.q5Radio.checkedRadioButtonId).text.toString().apply {
+                put(binding.q5Text.text.toString(),this)
+            }
+
+
+            findViewById<RadioButton>(binding.q6Radio.checkedRadioButtonId).text.toString().apply {
+                put(binding.q6Text.text.toString(),this)
+            }
+
+
+            findViewById<RadioButton>(binding.q7Radio.checkedRadioButtonId).text.toString().apply {
+                put(binding.q7Text.text.toString(),this)
+            }
+
+
+            findViewById<RadioButton>(binding.q8Radio.checkedRadioButtonId).text.toString().apply {
+                put(binding.q8Text.text.toString(),this)
+            }
+
+
+            findViewById<RadioButton>(binding.q9Radio.checkedRadioButtonId).text.toString().apply {
+                put(binding.q9Text.text.toString(),this)
+            }
+
+
+            findViewById<RadioButton>(binding.q10Radio.checkedRadioButtonId).text.toString().apply {
+                put(binding.q10Text.text.toString(),this)
+            }
+
+
+            findViewById<RadioButton>(binding.q11Radio.checkedRadioButtonId).text.toString().apply {
+                put(binding.q11Text.text.toString(),this)
+            }
+
+
+            findViewById<RadioButton>(binding.q12Radio.checkedRadioButtonId).text.toString().apply {
+                put(binding.q12Text.text.toString(),this)
+            }
+
+            findViewById<RadioButton>(binding.q13Radio.checkedRadioButtonId).text.toString().apply {
+                put(binding.q13Text.text.toString(),this)
+            }
+
+
+            findViewById<RadioButton>(binding.q14Radio.checkedRadioButtonId).text.toString().apply {
+                put(binding.q14Text.text.toString(),this)
+            }
+        }.toString()
+    }
+
+    private fun showExitDialog(){
+        AlertDialog.Builder(this)
+            .setTitle("consent declined")
+            .setMessage(R.string.exit_dialog)
+            .setOnDismissListener {
                 finishAffinity()
-            },{
-                onFailure("error occurred")
-            })
-        }
+            }
+            .setOnCancelListener {
+                finishAffinity()
+            }
+            .setPositiveButton(R.string.ok){ _, _->
+                finishAffinity()
+            }
+            .setCancelable(false)
+            .create()
+            .show()
     }
 
     private fun showThanksDialog(){
@@ -73,7 +195,7 @@ class ConsentActivity : AppCompatActivity() {
             progressView?.visibility = View.GONE
             Toast.makeText(
                 this, message,
-                Toast.LENGTH_LONG
+                Toast.LENGTH_SHORT
             ).show()
         }
     }

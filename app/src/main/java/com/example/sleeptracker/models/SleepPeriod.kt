@@ -25,7 +25,7 @@ class SleepPeriod(val period: Period, initState : String) {
         private val createdAt = Date(Calendar.getInstance().timeInMillis)
     }
     private val TAG = "SleepPeriod ${period.getPeriodID()}"
-    val pid = "${period.getPeriodID()}- UserID:${AWS.uid}"
+    val pid = "${period.getPeriodID()}- UserID:${AWS.uid()}"
     private var newData = false
     private var newSubPeriodData = false
 
@@ -64,7 +64,7 @@ class SleepPeriod(val period: Period, initState : String) {
                             .wakeUpTime(period.getEndTime())
                             .sleepTime(period.getStartTime())
                             .createdAt(Temporal.DateTime(createdAt,0))
-                            .userId(AWS.uid)
+                            .userId(AWS.uid())
                             .id(pid)
                             .accelerometerLastReading(accelerometerLastReading)
                             .totalMovements(totalMovementCount)
@@ -120,7 +120,7 @@ class SleepPeriod(val period: Period, initState : String) {
                     .wakeUpTime(period.getEndTime())
                     .sleepTime(period.getStartTime())
                     .createdAt(Temporal.DateTime(createdAt,0))
-                    .userId(AWS.uid)
+                    .userId(AWS.uid())
                     .id(pid)
                     .accelerometerLastReading(accelerometerLastReading)
                     .actualSleepTime(actualSleepTime)
