@@ -11,10 +11,6 @@ import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.objects.Period
 import com.example.sleeptracker.utils.MINUTE_IN_MS
 import com.example.sleeptracker.utils.time.TimeUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.util.*
 
 
@@ -25,9 +21,22 @@ class SleepPeriod(val period: Period, initState : String) {
         private val createdAt = Date(Calendar.getInstance().timeInMillis)
     }
     private val TAG = "SleepPeriod ${period.getPeriodID()}"
+
     val pid = "${period.getPeriodID()}- UserID:${AWS.uid()}"
+
     private var newData = false
+        set(value) {
+            synchronized(this){
+                field = value
+            }
+        }
+
     private var newSubPeriodData = false
+        set(value) {
+            synchronized(this){
+                field = value
+            }
+        }
 
     private var accelerometerLastReading : Double = 0.0
     private var totalMovementCount = 0
@@ -40,63 +49,72 @@ class SleepPeriod(val period: Period, initState : String) {
 
     init {
         saveState(initState)
-        CoroutineScope(Dispatchers.IO).launch {
-            saveLoop()
-            AWS.get(pid,TrackerPeriod::class.java){
+        AWS.get(pid,TrackerPeriod::class.java){
                 totalMovementCount =
                     (it.data as? TrackerPeriod)?.totalMovements ?: 0
                 accelerometerLastReading =
                     (it.data as? TrackerPeriod)?.accelerometerLastReading ?: 0.0
-            }
+
+            Thread {
+                saveLoop()
+            }.start()
         }
-        repeat(period.periodPortions.size) {
-            subPeriodsMovementCount.add(0)
+        // add initial movement count 0 to all sub periods
+        synchronized(period.periodPortions){
+            repeat(period.periodPortions.size) {
+                subPeriodsMovementCount.add(0)
+            }
         }
     }
 
-    private suspend fun saveLoop() {
-        CoroutineScope(Dispatchers.IO).launch {
-            while (true) {
-                if (newData) {
-                    newData = false
-                    AWS.save(
-                        TrackerPeriod.builder()
-                            .wakeUpTime(period.getEndTime())
-                            .sleepTime(period.getStartTime())
-                            .createdAt(Temporal.DateTime(createdAt,0))
-                            .userId(AWS.uid())
-                            .id(pid)
-                            .accelerometerLastReading(accelerometerLastReading)
-                            .totalMovements(totalMovementCount)
-                            .build()
-                    ) {}
-                    delay(delayBWModels)
 
-                    pendingStates.forEach {  state ->
+
+    private fun saveLoop() {
+        while (true) {
+            if (newData) {
+                newData = false
+
+                AWS.save(
+                    TrackerPeriod.builder()
+                        .wakeUpTime(period.getEndTime())
+                        .sleepTime(period.getStartTime())
+                        .createdAt(Temporal.DateTime(createdAt, 0))
+                        .userId(AWS.uid())
+                        .id(pid)
+                        .accelerometerLastReading(accelerometerLastReading)
+                        .totalMovements(totalMovementCount)
+                        .build()
+                ) {}
+                Thread.sleep(delayBWModels)
+
+                synchronized(pendingStates){
+                    pendingStates.forEach { state ->
                         AWS.save(
                             DeviceState.Builder()
                                 .time(state.first)
                                 .state(state.second)
                                 .trackerperiodId(pid)
-                                .id(getStateID(state.first,state.second))
+                                .id(getStateID(state.first, state.second))
                                 .build()
-                        ) {}
-                        delay(delayBWModels)
+                            ) {}
+                        Thread.sleep(delayBWModels)
                     }
                     pendingStates.removeAll { true }
-                    delay(delayBWModels)
                 }
-                if (newSubPeriodData) {
-                    newSubPeriodData = false
-                    run {
-                        period.periodPortions.forEachIndexed{ index,subPeriod ->
+                Thread.sleep(delayBWModels)
+            }
+            if (newSubPeriodData) {
+                newSubPeriodData = false
+                run {
+                    synchronized(period.periodPortions){
+                        period.periodPortions.forEachIndexed { index, subPeriod ->
                             val nowMS = Calendar.getInstance().timeInMillis
-                            if (nowMS in subPeriod.periodStartMS .. subPeriod.periodEndMS){
+                            if (nowMS in subPeriod.periodStartMS..subPeriod.periodEndMS) {
                                 val subPid = "${subPeriod.getPeriodID()} - pid:$pid"
                                 AWS.save(
                                     SubPeriod.builder()
                                         .range(subPeriod.getMinuteRangePeriodID())
-                                        .movementCount(subPeriodsMovementCount[index]+1)
+                                        .movementCount(subPeriodsMovementCount[index] + 1)
                                         .trackerperiodId(pid)
                                         .id(subPid)
                                         .build()
@@ -105,15 +123,15 @@ class SleepPeriod(val period: Period, initState : String) {
                             }
                         }
                     }
-                    Log.d(TAG, "finished saving sub periods")
                 }
-                delay(saveEvery)
+                Log.d(TAG, "finished saving sub periods")
             }
+            Thread.sleep(saveEvery)
         }
     }
 
-    private suspend fun forceSave(onCompleteCallback: ()->Unit){
-        CoroutineScope(Dispatchers.IO).launch {
+    private fun forceSave(onCompleteCallback: ()->Unit){
+        Thread {
             newData = false
             AWS.save(
                 TrackerPeriod.builder()
@@ -132,90 +150,96 @@ class SleepPeriod(val period: Period, initState : String) {
                     .totalMovements(totalMovementCount)
                     .build()
             ) {}
-            delay(delayBWModels)
+            Thread.sleep(delayBWModels)
 
 
-            sessions?.forEach {
-                AWS.save(
-                    Session.builder()
-                        .start(it.getStartTime())
-                        .end(it.getEndTime())
-                        .trackerperiodId(pid)
-                        .id("${it.getPeriodID()}- ${it.getMinuteRangePeriodID()} : pid:$pid")
-                        .build()
-                ) {}
-                delay(delayBWModels)
+            sessions?.let { sessions ->
+                synchronized(sessions){
+                    sessions.forEach {
+                        AWS.save(
+                            Session.builder()
+                                .start(it.getStartTime())
+                                .end(it.getEndTime())
+                                .trackerperiodId(pid)
+                                .id("${it.getPeriodID()}- ${it.getMinuteRangePeriodID()} : pid:$pid")
+                                .build()
+                        ) {}
+                        Thread.sleep(delayBWModels)
+                    }
+                    sessions.removeAll { true }
+                }
             }
-            sessions?.removeAll { true }
-            pendingStates.forEach {  state ->
-                AWS.save(
-                    DeviceState.Builder()
-                        .time(state.first)
-                        .state(state.second)
-                        .trackerperiodId(pid)
-                        .id(getStateID(state.second,state.first))
-                        .build()
-                ) {}
-                delay(delayBWModels)
+            synchronized(pendingStates){
+                pendingStates.forEach {  state ->
+                    AWS.save(
+                        DeviceState.Builder()
+                            .time(state.first)
+                            .state(state.second)
+                            .trackerperiodId(pid)
+                            .id(getStateID(state.second,state.first))
+                            .build()
+                    ) {}
+                    Thread.sleep(delayBWModels)
+                }
             }
-            pendingStates.removeAll { true }
-            delay(delayBWModels)
+            Thread.sleep(delayBWModels)
 
             if (newSubPeriodData){
                 newSubPeriodData = false
                 run {
-                    period.periodPortions.forEachIndexed let@{ index,subPeriod ->
-                        val nowMS = Calendar.getInstance().timeInMillis
-                        if (subPeriod.periodStartMS < nowMS + 30 * MINUTE_IN_MS) {
-                            return@let
-                        } else if (subPeriod.periodStartMS > nowMS) {
-                            return@run
+                    synchronized(period.periodPortions){
+                        period.periodPortions.forEachIndexed let@{ index, subPeriod ->
+                            val nowMS = Calendar.getInstance().timeInMillis
+                            if (subPeriod.periodStartMS < nowMS + 30 * MINUTE_IN_MS) {
+                                return@let
+                            } else if (subPeriod.periodStartMS > nowMS) {
+                                return@run
+                            }
+                            val subPid = "${subPeriod.getPeriodID()} - pid:$pid"
+                            AWS.save(
+                                SubPeriod.builder()
+                                    .range(subPeriod.getMinuteRangePeriodID())
+                                    .movementCount(subPeriodsMovementCount[index] + 1)
+                                    .trackerperiodId(pid)
+                                    .id(subPid)
+                                    .build()
+                            ) {}
+                            Thread.sleep(delayBWModels)
                         }
-                        val subPid = "${subPeriod.getPeriodID()} - pid:$pid"
-                        AWS.save(
-                            SubPeriod.builder()
-                                .range(subPeriod.getMinuteRangePeriodID())
-                                .movementCount(subPeriodsMovementCount[index]+1)
-                                .trackerperiodId(pid)
-                                .id(subPid)
-                                .build()
-                        ) {}
-                        delay(delayBWModels)
                     }
                 }
                 Log.d(TAG, "finished saving sub periods")
             }
-            delay(delayBWModels)
+            Thread.sleep(delayBWModels)
             onCompleteCallback()
-        }
-
-
-
+        }.start()
     }
 
-    private fun savePeriod() {
+    private fun setNewData() {
         newData = true
     }
 
-    private fun saveSubPeriod() {
+    private fun setNewSubPeriodData() {
         newSubPeriodData = true
     }
 
     fun saveAccelerometerReading(reading: Double){
         accelerometerLastReading = reading
-        savePeriod()
+        setNewData()
     }
 
     fun saveStepTime(){
         val nowMS = Calendar.getInstance().timeInMillis
-        period.periodPortions.forEachIndexed { index,sp  ->
-            if (nowMS in sp.periodStartMS..sp.periodEndMS) {
-                subPeriodsMovementCount[index]++
-                saveSubPeriod()
+        synchronized(period.periodPortions){
+            period.periodPortions.forEachIndexed { index, sp ->
+                if (nowMS in sp.periodStartMS..sp.periodEndMS) {
+                    subPeriodsMovementCount[index]++
+                    setNewSubPeriodData()
+                }
             }
         }
         totalMovementCount++
-        savePeriod()
+        setNewData()
 
     }
 
@@ -225,8 +249,8 @@ class SleepPeriod(val period: Period, initState : String) {
 
     fun saveState(state: String){
         val now = TimeUtil.getFractionalExactTime()
-        pendingStates.add(Pair(now,state))
-        savePeriod()
+        synchronized(pendingStates){ pendingStates.add(Pair(now, state)) }
+        setNewData()
     }
 
     fun calculateSleepDuration(sessions : HashMap<Long,Period> ,onCompleteCallback: ()->Unit) {
@@ -242,30 +266,28 @@ class SleepPeriod(val period: Period, initState : String) {
         onCompleteCallback()
     }
 
-    private fun setSortedStates(p: Period, onCompleteCallback: ((sortedStates: SortedMap<Long,String>) -> Unit)){
-        CoroutineScope(Dispatchers.IO).launch {
-            forceSave {
-                AWS.getPredicate(
-                    Where.matches(
-                        DeviceState.TRACKERPERIOD_ID.eq(pid)
-                    ).queryPredicate,
-                    DeviceState::class.java
-                ){
-                    val states = it.data
-                    states?.forEach lit@{ state ->
-                        if (state !is DeviceState) return@lit
-                        val ms = TimeUtil.getCorrectEventTimeMS(p, state.time) ?: return@lit
-                        sortedStates[ms] = state.state
-                    }
-                    onCompleteCallback(sortedStates)
+    private fun createSortedDeviceStatesList(p: Period, onCompleteCallback: ((sortedStates: SortedMap<Long,String>) -> Unit)){
+        forceSave {
+            AWS.getPredicate(
+                Where.matches(
+                    DeviceState.TRACKERPERIOD_ID.eq(pid)
+                ).queryPredicate,
+                DeviceState::class.java
+            ){
+                val states = it.data
+                states?.forEach lit@{ state ->
+                    if (state !is DeviceState) return@lit
+                    val ms = TimeUtil.getCorrectEventTimeMS(p, state.time) ?: return@lit
+                    sortedStates[ms] = state.state
                 }
+                onCompleteCallback(sortedStates)
             }
         }
 
     }
 
     fun calculateSessions(onCompleteCallback: (sessions : HashMap<Long,Period>) -> Unit){
-        setSortedStates(period){
+        createSortedDeviceStatesList(period){
             var lastEvent : String? = null
             var lastEventTime = 0L
             val sessions : HashMap<Long,Period> = hashMapOf()
@@ -314,12 +336,13 @@ class SleepPeriod(val period: Period, initState : String) {
     }
 
     fun calculateAverageMovementCount(onCompleteCallback: ()-> Unit){
-        CoroutineScope(Dispatchers.IO).launch {
             forceSave {
                 var averageMovementCount = 0
                 val sortedPortions = sortedMapOf<Long,Period>()
-                period.periodPortions.forEach{
-                    sortedPortions[it.periodStartMS] = it
+                synchronized(period.periodPortions){
+                    period.periodPortions.forEach {
+                        sortedPortions[it.periodStartMS] = it
+                    }
                 }
                 AWS.getPredicate(
                     Where.matches(
@@ -348,14 +371,11 @@ class SleepPeriod(val period: Period, initState : String) {
                         }
                     }
                     avgMovementCount = averageMovementCount.toString()
-                    CoroutineScope(Dispatchers.IO).launch {
                         forceSave {
                             onCompleteCallback()
                         }
-                    }
                 }
             }
-        }
     }
 
     private fun getSleepingDuration(msDuration: Long): String {

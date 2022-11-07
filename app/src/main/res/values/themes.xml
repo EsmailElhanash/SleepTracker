@@ -16,5 +16,7 @@
         <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/edit_text_shape</item>
 
+        <item name="windowActionBar">false</item>
+
     </style>
 </resources>
