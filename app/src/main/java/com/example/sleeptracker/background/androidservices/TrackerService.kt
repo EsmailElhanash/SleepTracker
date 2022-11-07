@@ -230,7 +230,7 @@ class TrackerService : Service(){
         cancelPeriodicChecker()
         try {
             unregisterReceiver(stateReceiver)
-        }catch (e: Exception){}
+        }catch (_: Exception){}
 
         val uid = Amplify.Auth.currentUser?.userId
         val pid = activePeriod?.pid

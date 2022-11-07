@@ -46,7 +46,7 @@ object AWS {
             },
             {
                 Log.d(TAG, "get: $it")
-                it.localizedMessage?.let { it1 -> onComplete(Response(false,null,it1)) }
+                onComplete(Response(false,null, it.localizedMessage))
             }
         )
     }
