@@ -67,7 +67,7 @@ class HomeActivity : AppCompatActivity() {
 
         try {
             checkDisabledBatteryOptimizationPermission{
-                checkExactAlarmPermission()
+
             }
         }catch (e:IllegalStateException){
 
@@ -81,23 +81,6 @@ class HomeActivity : AppCompatActivity() {
 //        }
     }
 
-    private fun checkExactAlarmPermission() {
-        val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val canScheduleExactAlarms = alarmManager.canScheduleExactAlarms()
-            if (!canScheduleExactAlarms){
-                requestScheduleExactAlarms()
-            }
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.S)
-    private fun requestScheduleExactAlarms(){
-        val intent = Intent()
-        intent.action = Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
-        intent.data = Uri.parse("package:$packageName")
-        startActivity(intent)
-    }
 
     override fun onResume() {
         super.onResume()
