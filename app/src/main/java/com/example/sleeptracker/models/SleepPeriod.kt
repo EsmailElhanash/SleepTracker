@@ -14,12 +14,14 @@ import com.example.sleeptracker.utils.time.TimeUtil
 import java.util.*
 
 
-class SleepPeriod(val period: Period, initState : String) {
+class SleepPeriod constructor(val period: Period, initState : String) {
     companion object{
         private const val saveEvery = 30000L
         private const val delayBWModels = 2000L
         private val createdAt = Date(Calendar.getInstance().timeInMillis)
     }
+
+
     private val TAG = "SleepPeriod ${period.getPeriodID()}"
 
     val pid = "${period.getPeriodID()}- UserID:${AWS.uid()}"
@@ -70,6 +72,7 @@ class SleepPeriod(val period: Period, initState : String) {
 
 
     private fun saveLoop() {
+        
         while (true) {
             if (newData) {
                 newData = false
