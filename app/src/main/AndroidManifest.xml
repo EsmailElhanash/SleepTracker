@@ -72,7 +72,6 @@
             android:name=".background.receivers.NotificationReceiver"
             android:enabled="true" />
 
-
         <receiver
             android:name=".background.receivers.ResetReceiver"
             android:enabled="true"
