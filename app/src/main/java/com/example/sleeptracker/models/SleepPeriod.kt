@@ -11,10 +11,6 @@ import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.objects.Period
 import com.example.sleeptracker.utils.MINUTE_IN_MS
 import com.example.sleeptracker.utils.time.TimeUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.util.*
 
 
