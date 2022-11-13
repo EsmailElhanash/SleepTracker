@@ -11,6 +11,10 @@ import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.objects.Period
 import com.example.sleeptracker.utils.MINUTE_IN_MS
 import com.example.sleeptracker.utils.time.TimeUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.*
 
 
@@ -20,6 +24,8 @@ class SleepPeriod(val period: Period, initState : String) {
         private const val delayBWModels = 2000L
         private val createdAt = Date(Calendar.getInstance().timeInMillis)
     }
+
+
     private val TAG = "SleepPeriod ${period.getPeriodID()}"
 
     val pid = "${period.getPeriodID()}- UserID:${AWS.uid()}"
@@ -70,6 +76,7 @@ class SleepPeriod(val period: Period, initState : String) {
 
 
     private fun saveLoop() {
+
         while (true) {
             if (newData) {
                 newData = false

@@ -24,3 +24,4 @@ amplifytools.xcconfig
 /release-ks.jks
 /test-release-keystore.jks
 /.idea/
+/app/release/
