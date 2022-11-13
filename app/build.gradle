@@ -24,7 +24,7 @@ android {
         minSdk 16
         targetSdk 32
         versionCode 1
-        versionName "1.0"
+        versionName "13N22-fixed-dark-mode-crash"
         multiDexEnabled true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -52,6 +52,7 @@ android {
     buildFeatures {
         viewBinding true
     }
+    namespace 'com.example.sleeptracker'
 }
 dependencies {
     implementation 'com.amplifyframework:core-kotlin:0.19.4'
