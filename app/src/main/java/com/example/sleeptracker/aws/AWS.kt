@@ -78,19 +78,6 @@ object AWS {
 
     }
 
-    fun saveINS(model: Model, onComplete:(res:Response) -> Unit){
-        Amplify.API.mutate(ModelMutation.create(model),
-            {
-                onComplete(Response(true,it.data,null))
-            },
-            {
-                it.localizedMessage?.let { it1 -> onComplete(Response(false,null,it1)) }
-                amplifyRetry()
-            }
-        )
-
-    }
-
     fun uid () =
         Amplify.Auth?.currentUser?.userId
 
