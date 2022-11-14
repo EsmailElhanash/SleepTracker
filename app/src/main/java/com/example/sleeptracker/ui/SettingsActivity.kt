@@ -94,8 +94,10 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
         )
         daysCheckboxes.forEach { checkBox->
             user.workDays.observe(this){
-                if(checkBox.text in it.daysNames){
-                    checkBox.isChecked = true
+                if (it != null) {
+                    if(checkBox.text in it.daysNames){
+                        checkBox.isChecked = true
+                    }
                 }
             }
         }
@@ -153,13 +155,17 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
             onComplete(workDaysNames,offDaysNames)
         }else {
             user.workDays.observe(this){
-                workDaysNames = ArrayList(it.daysNames)
+                if (it != null) {
+                    workDaysNames = ArrayList(it.daysNames)
+                }
                 if (workDaysNames!=null && offDaysNames!=null)
                     onComplete(workDaysNames!!, offDaysNames!!)
             }
 
             user.offDays.observe(this){
-                offDaysNames = ArrayList(it.daysNames)
+                if (it != null) {
+                    offDaysNames = ArrayList(it.daysNames)
+                }
                 onComplete(workDaysNames!!, offDaysNames!!)
             }
         }
