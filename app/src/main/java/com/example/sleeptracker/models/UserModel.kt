@@ -21,8 +21,8 @@ import java.util.*
 class UserModel : ViewModel() {
 
 //    //Sleep Data
-    val workDays : MutableLiveData<DaysGroup> = MutableLiveData()
-    val offDays : MutableLiveData<DaysGroup> = MutableLiveData()
+    val workDays : MutableLiveData<DaysGroup?> = MutableLiveData()
+    val offDays : MutableLiveData<DaysGroup?> = MutableLiveData()
 
     private var surveyLastUpdated: Long? = null
     private var surveyLastUpdated2: Long? = null
