@@ -1,6 +1,7 @@
 package com.example.sleeptracker.models
 
 import android.util.Log
+import com.amplifyframework.core.Amplify
 import com.amplifyframework.core.model.query.Where
 import com.amplifyframework.core.model.temporal.Temporal
 import com.amplifyframework.datastore.generated.model.DeviceState
@@ -51,16 +52,22 @@ class SleepPeriod(val period: Period, initState : String) {
 
     init {
         saveState(initState)
-        AWS.get(pid,TrackerPeriod::class.java){
+        Amplify.DataStore.query(
+           TrackerPeriod::class.java, Where.id(pid),
+            {
+                val trackerPeriod = it.next()
                 totalMovementCount =
-                    (it.data as? TrackerPeriod)?.totalMovements ?: 0
+                    trackerPeriod?.totalMovements ?: 0
                 accelerometerLastReading =
-                    (it.data as? TrackerPeriod)?.accelerometerLastReading ?: 0.0
+                    trackerPeriod?.accelerometerLastReading ?: 0.0
 
-            Thread {
-                saveLoop()
-            }.start()
-        }
+                Thread {
+                    saveLoop()
+                }.start()
+            },
+            {
+            }
+        )
         // add initial movement count 0 to all sub periods
         synchronized(period.periodPortions){
             repeat(period.periodPortions.size) {
