@@ -1,32 +1,21 @@
 package com.example.sleeptracker.aws
 
 import android.util.Log
-import com.amplifyframework.AmplifyException
-import com.amplifyframework.api.aws.AWSApiPlugin
-import com.amplifyframework.api.aws.AuthModeStrategyType
-import com.amplifyframework.api.graphql.model.ModelMutation
 import com.amplifyframework.auth.AuthChannelEventName
-import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin
 import com.amplifyframework.core.Amplify
-import com.amplifyframework.core.AmplifyConfiguration
 import com.amplifyframework.core.model.Model
 import com.amplifyframework.core.model.query.QuerySortBy
 import com.amplifyframework.core.model.query.QuerySortOrder
 import com.amplifyframework.core.model.query.Where
 import com.amplifyframework.core.model.query.predicate.QueryPredicate
-import com.amplifyframework.datastore.*
+import com.amplifyframework.datastore.DataStoreChannelEventName
+import com.amplifyframework.datastore.appsync.ModelWithMetadata
 import com.amplifyframework.datastore.generated.model.User
 import com.amplifyframework.hub.HubChannel
-import com.amplifyframework.kotlin.datastore.DataStore
-import com.example.sleeptracker.App
-import com.example.sleeptracker.R
-import com.example.sleeptracker.background.androidservices.TrackerService
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.concurrent.TimeUnit
 
 object AWS {
     private const val TAG = "DBOBJECT"
@@ -99,6 +88,24 @@ object AWS {
                 amplifyRetry()
             }
         )
+        Amplify.Hub.subscribe(
+            HubChannel.DATASTORE,
+            { it.name == DataStoreChannelEventName.OUTBOX_MUTATION_FAILED.toString() },
+            {
+                Log.i("MyAmplifyApp", "User has a network connection? ")
+                amplifyRetry()
+            }
+        )
+        Amplify.Hub.subscribe(
+            HubChannel.DATASTORE,
+            { it.name == DataStoreChannelEventName.SUBSCRIPTION_DATA_PROCESSED.toString() &&
+                    (it.data as ModelWithMetadata<*> ).model is User
+            },
+            {
+                Log.i("MyAmplifyApp", "User has a network connection? ")
+            }
+        )
+
         Amplify.Hub.subscribe(HubChannel.AUTH,
             {
                 // Listen for sign out events.

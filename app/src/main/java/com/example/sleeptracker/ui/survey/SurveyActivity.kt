@@ -18,15 +18,16 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.amplifyframework.core.model.temporal.Temporal
 import com.amplifyframework.datastore.generated.model.SurveyEntry
-import com.amplifyframework.datastore.generated.model.User
 import com.example.sleeptracker.R
 import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.databinding.ActivitySurveyBinding
+import com.example.sleeptracker.models.UserObject
 import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.ui.survey.utils.PrepareQuestions
 import com.example.sleeptracker.ui.survey.utils.SurveyPage
 import com.example.sleeptracker.ui.survey.utils.SurveyQuestion
 import com.example.sleeptracker.ui.survey.utils.getSurvey3Answers
+import com.example.sleeptracker.utils.getLiveDataValueOnce
 import org.json.JSONObject
 import java.util.*
 
@@ -152,8 +153,9 @@ class SurveyActivity : AppCompatActivity() {
                     it.pickedAnswerValue = 0
                 }
             }
-            saveAnswers()
-            checkScore()
+            saveAnswers{
+                checkScore()
+            }
         }
     }
 
@@ -243,7 +245,7 @@ class SurveyActivity : AppCompatActivity() {
         finish()
     }
 
-    private fun saveAnswers() {
+    private fun saveAnswers(onCompleteCallback: () -> Unit) {
         val uid = AWS.uid()?:return
         val message = "Saving answers"
         Toast.makeText(applicationContext,message,Toast.LENGTH_LONG).show()
@@ -282,15 +284,18 @@ class SurveyActivity : AppCompatActivity() {
             .userId(uid)
             .id("Survey:$time-User:$uid")
             .build()
-        AWS.save(surveyEntry){}
-        saveDate(uid){}
+        AWS.save(surveyEntry){
+            saveDate {
+                onCompleteCallback()
+            }
+        }
     }
 
-    private fun saveDate(uid: String,onCompleteCallback: (() -> Unit)) {
+    private fun saveDate(onCompleteCallback: () -> Unit) {
         val nowMS = Calendar.getInstance().timeInMillis
 
-        AWS.get(uid, User::class.java){
-            val u = with((it.data as User).copyOfBuilder()){
+        UserObject.user.getLiveDataValueOnce {
+            val u = with(it.copyOfBuilder()){
                 when (surveyCondition) {
                     SURVEY_CASE_1 -> surveyLastUpdate(Temporal.DateTime(Date(nowMS),0))
                     else -> this

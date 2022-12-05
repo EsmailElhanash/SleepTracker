@@ -17,6 +17,7 @@ import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.background.receivers.SurveyAlarmReceiver
 import com.example.sleeptracker.initAws
 import com.example.sleeptracker.models.UserModel
+import com.example.sleeptracker.models.UserObject
 import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.utils.LAST_SURVEY_NOTIFICATION
 import com.example.sleeptracker.utils.PREFERENCES_NAME
@@ -62,14 +63,14 @@ class SurveyService : Service() {
         val pref = applicationContext.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
         val lastNotification = pref.getLong(LAST_SURVEY_NOTIFICATION, 0)
         if (nowMS<=lastNotification + DAY_IN_MS){
-            user.getSurveyRetakePeriod {
+            UserObject.getSurveyRetakePeriod {
                 onComplete(it)
             }
             return
         }
 
-        user.getSurveyLastUpdatedCaseOne{ last1->
-            user.getSurveyRetakePeriod { retake->
+        UserObject.getSurveyLastUpdatedCaseOne{ last1->
+            UserObject.getSurveyRetakePeriod { retake->
                 try {
                     if (nowMS>=(last1+retake* DAY_IN_MS)){
                         NotificationsManager.displaySurveyNotification(applicationContext)
@@ -111,7 +112,7 @@ class SurveyService : Service() {
             for ((_, count) in sortedDisturbancesCount) {
                 disturbancesCountList.add(count)
                 val lastIndex = disturbancesCountList.size - 1
-                if (lastIndex >= 4) { // todo CRITICAL CHANGE BACK TO 4 NOT 0
+                if (lastIndex >= 4) {
                     val last5Count =
                             disturbancesCountList[lastIndex    ] +
                             disturbancesCountList[lastIndex - 1] +
@@ -121,7 +122,7 @@ class SurveyService : Service() {
                     if (last5Count >= 3) shouldShowConditionTwoNotification = true
                 }
             }
-            if (shouldShowConditionTwoNotification) {// todo CRITICAL CHANGE BACK TO shouldShowConditionTwoNotification NOT !shouldShowConditionTwoNotification
+            if (shouldShowConditionTwoNotification) {
                 NotificationsManager.showSurveyConditionTwoNotification(this)
                 onComplete()
             }else {
@@ -139,12 +140,12 @@ class SurveyService : Service() {
                         try {
                             val count = model.disturbancesCount.toInt()
                             sortedDisturbancesCount[ms]=count
-                        }catch (e:Exception){}
+                        }catch (_:Exception){}
 
                         try {
                             val count = model.averageMovementCount.toInt()
                             sortedMovementCount[ms]=count
-                        }catch (e:Exception){}
+                        }catch (_:Exception){}
                     }
 
                     checkCondition()
@@ -154,15 +155,15 @@ class SurveyService : Service() {
             }
          }
 
-        user.getSurveyLastUpdatedCaseOne{
+        UserObject.getSurveyLastUpdatedCaseOne{
             s1 = it
-            if (s1!=null && s2!=null)checkDate(s1!!, s2!!)
+            if (s2!=null)checkDate(s1!!, s2!!)
         }
 
 
-        user.getSurveyLastUpdatedCaseTwo{
+        UserObject.getSurveyLastUpdatedCaseTwo{
             s2 = it
-            if (s1!=null && s2!=null)checkDate(s1!!, s2!!)
+            if (s1!=null) checkDate(s1!!, s2!!)
         }
     }
 

@@ -24,7 +24,7 @@ android {
         minSdk 16
         targetSdk 32
         versionCode 1
-        versionName "13N22-fixed-dark-mode-crash"
+        versionName "code improve"
         multiDexEnabled true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

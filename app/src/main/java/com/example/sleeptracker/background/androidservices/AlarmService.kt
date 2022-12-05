@@ -11,18 +11,18 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.content.ContextCompat
-import com.example.sleeptracker.App
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.receivers.AlarmReceiver
 import com.example.sleeptracker.database.utils.DBParameters.DAYS
 import com.example.sleeptracker.initAws
-import com.example.sleeptracker.models.UserModel
+import com.example.sleeptracker.models.UserObject
 import com.example.sleeptracker.objects.DaysGroup
 import com.example.sleeptracker.objects.TimePoint
 import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.utils.MINUTE_IN_MS
 import com.example.sleeptracker.utils.androidutils.NotificationType
 import com.example.sleeptracker.utils.androidutils.NotificationsManager
+import com.example.sleeptracker.utils.getLiveDataValueOnce
 import com.example.sleeptracker.utils.time.DAY_IN_MS
 import com.example.sleeptracker.utils.time.TimeUtil
 import kotlinx.coroutines.CoroutineScope
@@ -34,10 +34,8 @@ import java.util.*
 
 class AlarmService : Service() {
     private var isForeground: Boolean = false
-    private lateinit var user: UserModel
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         initAws(this) {
-            user = UserModel()
             if (!isForeground) prepareAlarmStartTime()
             else {
                 stopForeground()
@@ -51,20 +49,16 @@ class AlarmService : Service() {
         goForeGround()
         var workDaysGroup : DaysGroup? = null
         var offDaysGroup : DaysGroup? = null
-        user.workDays.observeForever{
-            if (it != null) {
-                workDaysGroup = it
-                if (workDaysGroup!=null && offDaysGroup!=null)
-                    setAlarm(workDaysGroup!!, offDaysGroup!!)
+        UserObject.workDays.getLiveDataValueOnce{
+            workDaysGroup = it
+            if (workDaysGroup!=null && offDaysGroup!=null)
+                setAlarm(workDaysGroup!!, offDaysGroup!!)
 
-            }
         }
-        user.offDays.observeForever {
-            if (it != null) {
-                offDaysGroup = it
-                if (workDaysGroup!=null && offDaysGroup!=null)
-                    setAlarm(workDaysGroup!!, offDaysGroup!!)
-            }
+        UserObject.offDays.getLiveDataValueOnce {
+            offDaysGroup = it
+            if (workDaysGroup!=null && offDaysGroup!=null)
+                setAlarm(workDaysGroup!!, offDaysGroup!!)
         }
         CoroutineScope(Dispatchers.IO).launch{
             delay(60000)

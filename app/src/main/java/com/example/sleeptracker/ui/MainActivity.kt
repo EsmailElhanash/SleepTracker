@@ -3,24 +3,16 @@ package com.example.sleeptracker.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.JsonReader
 import android.util.Log
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.amplifyframework.AmplifyException
-import com.amplifyframework.api.aws.AWSApiPlugin
-import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin
 import com.amplifyframework.core.Amplify
-import com.amplifyframework.datastore.AWSDataStorePlugin
-import com.amplifyframework.datastore.DataStoreConfiguration
-import com.amplifyframework.datastore.generated.model.User
 import com.example.sleeptracker.BuildConfig
 import com.example.sleeptracker.R
-import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.database.utils.DBParameters.CONSENT_ACCEPTED
 import com.example.sleeptracker.initAws
+import com.example.sleeptracker.models.UserObject
 import com.example.sleeptracker.ui.signin.LoginActivity
-import com.google.gson.JsonObject
+import com.example.sleeptracker.utils.getLiveDataValueOnce
 import org.json.JSONObject
 
 
@@ -29,7 +21,7 @@ class MainActivity : AppCompatActivity()  {
     companion object {
         var TEST = BuildConfig.DEBUG
         const val TAG  = "MainActivity"
-        const val c  = 11711
+        const val c  = 999900006
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,9 +36,8 @@ class MainActivity : AppCompatActivity()  {
                 finish()
             }else {
                 Log.d(TAG, "onCreate: $uid")
-                AWS.get(uid,User::class.java){
-                    Log.d(TAG, "onCreate: ${it.success}")
-                    val u = it.data as User
+                UserObject.user.getLiveDataValueOnce {
+                    val u = it
                     try{
                         JSONObject(u.consent).get(
                             "consent"
