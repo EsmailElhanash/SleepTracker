@@ -206,7 +206,7 @@ class SurveyService : Service() {
             } else {
                 PendingIntent.getBroadcast(applicationContext,
                     SURVEY_ALARM_ID,
-                    intent, PendingIntent.FLAG_UPDATE_CURRENT)
+                    intent, if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT } else { PendingIntent.FLAG_UPDATE_CURRENT })
             }
         }
         when {
@@ -243,7 +243,7 @@ class SurveyService : Service() {
                         )
                     } else {
                         PendingIntent.getActivity(this, 0, notificationIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT } else { PendingIntent.FLAG_UPDATE_CURRENT }
                         )
                     }
                 }

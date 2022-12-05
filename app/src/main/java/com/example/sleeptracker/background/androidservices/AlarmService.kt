@@ -1,6 +1,5 @@
 package com.example.sleeptracker.background.androidservices
 
-import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_IMMUTABLE
@@ -51,13 +50,13 @@ class AlarmService : Service() {
         var offDaysGroup : DaysGroup? = null
         UserObject.workDays.getLiveDataValueOnce{
             workDaysGroup = it
-            if (workDaysGroup!=null && offDaysGroup!=null)
+            if (offDaysGroup!=null)
                 setAlarm(workDaysGroup!!, offDaysGroup!!)
 
         }
         UserObject.offDays.getLiveDataValueOnce {
             offDaysGroup = it
-            if (workDaysGroup!=null && offDaysGroup!=null)
+            if (workDaysGroup!=null)
                 setAlarm(workDaysGroup!!, offDaysGroup!!)
         }
         CoroutineScope(Dispatchers.IO).launch{
@@ -93,15 +92,10 @@ class AlarmService : Service() {
                 val dayDiff = (7 - (nowDayOfWeek - dayNum)) % 7
                 val startTimeMS = (nxtSleepTime + dayDiff * DAY_IN_MS)
                 val pIntent = Intent(applicationContext, AlarmReceiver::class.java).let { intent ->
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         PendingIntent.getBroadcast(applicationContext,
                             dayNum,
-                            intent,PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)
-                    } else {
-                        PendingIntent.getBroadcast(applicationContext,
-                            dayNum,
-                            intent,PendingIntent.FLAG_UPDATE_CURRENT)
-                    }
+                            intent,if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT } else { PendingIntent.FLAG_UPDATE_CURRENT })
+
                 }
                 Log.d("setAlarm ", ": ${Date(startTimeMS)}")
                 when {
