@@ -2,7 +2,6 @@ package com.example.sleeptracker.ui
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,13 +12,12 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.amplifyframework.core.Amplify
-import com.example.sleeptracker.App
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.androidservices.AlarmService
-import com.example.sleeptracker.background.androidservices.TrackerService
-import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.database.utils.DBParameters
 import com.example.sleeptracker.databinding.ActivitySettingsBinding
+import com.example.sleeptracker.models.UserModel
+import com.example.sleeptracker.models.UserObject
 import com.example.sleeptracker.objects.DaysGroup
 import com.example.sleeptracker.objects.GroupType
 import com.example.sleeptracker.objects.TimePoint
@@ -68,7 +66,7 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
         binding.updateTimeButton.setOnClickListener {
             binding.updateTimeButton.isEnabled = false
             getWorkAndOffDaysGroups{
-                user.updateDayGroups(it){
+                UserObject.updateDayGroups(it){
                     ContextCompat.startForegroundService(applicationContext,Intent(applicationContext,AlarmService::class.java))
                 }
 
@@ -118,7 +116,7 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
         myDialog.show()
         myDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
             getWorkAndOffDaysGroups(view){
-                user.updateDayGroups(it){
+                UserObject.updateDayGroups(it){
                     ContextCompat.startForegroundService(context.applicationContext,Intent(applicationContext, AlarmService::class.java))
                 }
             }
@@ -154,13 +152,14 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
         }else {
             user.workDays.observe(this){
                 workDaysNames = ArrayList(it.daysNames)
-                if (workDaysNames!=null && offDaysNames!=null)
+                if (offDaysNames!=null)
                     onComplete(workDaysNames!!, offDaysNames!!)
             }
 
             user.offDays.observe(this){
                 offDaysNames = ArrayList(it.daysNames)
-                onComplete(workDaysNames!!, offDaysNames!!)
+                if (workDaysNames!=null)
+                    onComplete(workDaysNames!!, offDaysNames!!)
             }
         }
     }
@@ -169,7 +168,7 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
         var oNames:ArrayList<String>? = null
 
         val fire = {
-            user.getWorkDaysOnce { workDaysGroup ->
+            UserObject.getWorkDaysOnce { workDaysGroup ->
                 if (wNames == null) {
                     wNames = ArrayList(workDaysGroup.daysNames)
                 }
@@ -177,7 +176,7 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
                     DaysGroup(wNames!!, GroupType.WORK_DAYS,
                         workDaySleepTime?: workDaysGroup.sleepTime, workDayWakeTime?: workDaysGroup.wakeTime)
 
-                user.getOffDaysOnce { offDaysGroup ->
+                UserObject.getOffDaysOnce { offDaysGroup ->
                     if (oNames == null) {
                         oNames = ArrayList(offDaysGroup.daysNames)
                     }

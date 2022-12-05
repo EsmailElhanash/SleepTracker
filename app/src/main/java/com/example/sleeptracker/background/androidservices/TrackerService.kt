@@ -12,18 +12,16 @@ import android.content.IntentFilter
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
-import android.os.WorkSource
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.amplifyframework.core.Amplify
-import com.example.sleeptracker.App
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.MySensorsManager
-import com.example.sleeptracker.background.receivers.AlarmReceiver
 import com.example.sleeptracker.background.receivers.StateReceiver
 import com.example.sleeptracker.initAws
 import com.example.sleeptracker.models.SleepPeriod
 import com.example.sleeptracker.models.UserModel
+import com.example.sleeptracker.models.UserObject
 import com.example.sleeptracker.objects.Period
 import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.ui.statistics.daily.HOUR_IN_MS
@@ -31,7 +29,6 @@ import com.example.sleeptracker.utils.MINUTE_IN_MS
 import com.example.sleeptracker.utils.androidutils.NotificationType
 import com.example.sleeptracker.utils.androidutils.NotificationsManager
 import java.util.*
-import kotlin.math.log
 
 
 private const val NOTIFICATION_ID = 1213
@@ -68,7 +65,7 @@ class TrackerService : Service(){
     private fun checkPeriod(intent: Intent?){
         if (!tracking) startForegroundPeriodCheck()
         var inPeriod = false
-        user.getSleepPeriodCallBack { periods ->
+        UserObject.getSleepPeriodCallBack { periods ->
             periods.forEach {
                 if (Calendar.getInstance().timeInMillis in it.periodStartMS..it.periodEndMS) {
                     Log.d("TrackerService", "checkPeriod: Active period:${it.getBasicID()}")

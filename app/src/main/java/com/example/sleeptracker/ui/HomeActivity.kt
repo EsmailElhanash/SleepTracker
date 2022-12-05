@@ -27,6 +27,7 @@ import com.example.sleeptracker.background.androidservices.SurveyService
 import com.example.sleeptracker.database.utils.DBParameters
 import com.example.sleeptracker.databinding.ActivityHomeBinding
 import com.example.sleeptracker.models.UserModel
+import com.example.sleeptracker.models.UserObject
 import com.example.sleeptracker.ui.statistics.DAILY_STATISTICS
 import com.example.sleeptracker.ui.statistics.STATISTICS_TYPE
 import com.example.sleeptracker.ui.statistics.StatisticsActivity
@@ -69,16 +70,9 @@ class HomeActivity : AppCompatActivity() {
             checkDisabledBatteryOptimizationPermission{
                 checkExactAlarmPermission()
             }
-        }catch (e:IllegalStateException){
+        }catch (_:IllegalStateException){
 
         }
-
-
-//         crash test!!
-//        CoroutineScope(Dispatchers.IO).launch {
-//            delay(10000)
-//            App.crash()
-//        }
     }
 
     private fun checkExactAlarmPermission() {
@@ -183,8 +177,8 @@ class HomeActivity : AppCompatActivity() {
 
     private fun checkLastSurvey(user:UserModel){
         val nowMS = Calendar.getInstance().timeInMillis
-        UserModel().getSurveyLastUpdatedCaseOne{
-            user.getSurveyRetakePeriod { retakePeriod ->
+        UserObject.getSurveyLastUpdatedCaseOne{
+            UserObject.getSurveyRetakePeriod { retakePeriod ->
                 try {
                     if (nowMS >= (it + retakePeriod * DAY_IN_MS)) { //DONE... todo CRITICAL!!! ATTENTION CHANGE TO >=
                         val i = Intent(this, SurveyActivity::class.java)

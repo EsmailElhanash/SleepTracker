@@ -7,32 +7,30 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RadioButton
-import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.children
 import com.example.sleeptracker.R
-import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.database.utils.DBParameters.CONSENT_ACCEPTED
 import com.example.sleeptracker.database.utils.DBParameters.CONSENT_DECLINED
 import com.example.sleeptracker.databinding.ActivityConsentBinding
+import com.example.sleeptracker.models.UserObject
 import com.example.sleeptracker.ui.survey.SurveyActivity
-import com.google.gson.JsonObject
 import org.json.JSONObject
 
 class ConsentActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityConsentBinding
     private var progressView : View? = null
-    private val user : UserModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityConsentBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+
+
 
         binding.next.setOnClickListener let@{
             if (!isAllQuestionAnswered()) {
@@ -40,7 +38,7 @@ class ConsentActivity : AppCompatActivity() {
                 return@let
             }
             showProgressIndicator()
-            user.updateConsent(getConsentAnswer(),run@{
+            UserObject.updateConsent(getConsentAnswer(),run@{
                 if (!isConsentAccepted()){
                     runOnUiThread { showExitDialog() }
                     return@run

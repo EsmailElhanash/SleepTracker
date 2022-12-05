@@ -9,12 +9,12 @@ import androidx.core.app.NotificationManagerCompat
 import com.amplifyframework.core.Amplify
 import com.amplifyframework.core.model.temporal.Temporal
 import com.amplifyframework.datastore.generated.model.SurveyUpdateLastCase2
-import com.amplifyframework.datastore.generated.model.User
-import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.initAws
+import com.example.sleeptracker.models.UserObject
 import com.example.sleeptracker.ui.survey.SurveyActivity
 import com.example.sleeptracker.utils.androidutils.NotificationType
 import com.example.sleeptracker.utils.androidutils.NotificationsManager
+import com.example.sleeptracker.utils.getLiveDataValueOnce
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -61,17 +61,15 @@ class NotificationReceiver : BroadcastReceiver() {
     }
 
     private fun saveLastCondition2(took:String){
-        val uid = AWS.uid()?:return
-        val nowMS = Calendar.getInstance().timeInMillis
-
-        AWS.get(uid, User::class.java){
-            val u = (it.data as User).copyOfBuilder()
+        UserObject.user.getLiveDataValueOnce {
+            val nowMS = Calendar.getInstance().timeInMillis
+            val u = it.copyOfBuilder()
                 .surveyLastUpdate2(
                     SurveyUpdateLastCase2
                         .builder()
                         .time(Temporal.DateTime(Date(nowMS),0)).tookSurvey(took).build()
                 ).build()
-            AWS.save(u){}
+            UserObject.updateUser(u)
         }
     }
 

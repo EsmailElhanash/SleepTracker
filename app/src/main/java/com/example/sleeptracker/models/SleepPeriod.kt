@@ -374,9 +374,9 @@ class SleepPeriod(val period: Period, initState : String) {
                         }
                     }
                     avgMovementCount = averageMovementCount.toString()
-                        forceSave {
-                            onCompleteCallback()
-                        }
+                    forceSave {
+                        onCompleteCallback()
+                    }
                 }
             }
     }

@@ -26,6 +26,7 @@ import com.example.sleeptracker.R
 import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.databinding.ActivitySignUpBinding
+import com.example.sleeptracker.models.UserObject
 import com.example.sleeptracker.objects.DaysGroup
 import com.example.sleeptracker.objects.GroupType
 import com.example.sleeptracker.objects.TimePoint
@@ -237,7 +238,7 @@ class SignUpActivity : AppCompatActivity()
             AWS.save(u){
                 if (it.success){
                     runOnUiThread {
-                        user.init()
+                        UserObject
                         val consentIntent = Intent(this,ConsentActivity::class.java)
                         startActivity(consentIntent)
                     }
