@@ -66,7 +66,7 @@ class AlarmService : Service() {
         }
     }
 
-    @SuppressLint("UnspecifiedImmutableFlag")
+
     private fun setAlarm(workDaysGroup: DaysGroup,offDaysGroup: DaysGroup){
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         if (alarmManager != null) {
@@ -96,7 +96,7 @@ class AlarmService : Service() {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         PendingIntent.getBroadcast(applicationContext,
                             dayNum,
-                            intent,FLAG_IMMUTABLE)
+                            intent,PendingIntent.FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE)
                     } else {
                         PendingIntent.getBroadcast(applicationContext,
                             dayNum,

@@ -25,3 +25,4 @@ amplifytools.xcconfig
 /test-release-keystore.jks
 /.idea/
 /app/release/
+/app/lint-baseline.xml
