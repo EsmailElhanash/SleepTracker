@@ -23,24 +23,6 @@ object AWS {
     data class PredicateResponse (val success:Boolean, val data:List<Model>?, val error:String?)
 
 
-    fun get(id:String, c: Class<out Model>, onComplete:(res:Response) -> Unit) {
-        Log.d(TAG, "get:")
-        Amplify.DataStore.query(
-            c, Where.id(id),
-            {
-                if (it.hasNext())
-                    onComplete(Response(true,it.next(),null))
-                else
-                    onComplete(Response(false,null,null))
-            },
-            {
-                Log.d(TAG, "get: $it")
-                onComplete(Response(false,null, it.localizedMessage))
-            }
-        )
-    }
-
-
     fun getPredicate(predicate:QueryPredicate, c: Class<out Model>, onComplete:(res:PredicateResponse) -> Unit){
         Amplify.DataStore.query(
             c, Where.matchesAndSorts(predicate, listOf(QuerySortBy("createdAt",QuerySortOrder.DESCENDING))),
