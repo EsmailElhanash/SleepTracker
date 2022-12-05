@@ -165,7 +165,7 @@ object UserObject {
 
 
     fun updateDayGroups(groups : Pair<DaysGroup, DaysGroup>, onComplete: () -> Unit){
-        val uid = Amplify.Auth?.currentUser?.userId ?: return
+        Amplify.Auth?.currentUser?.userId ?: return
         val workDaysGroup: DaysGroup = groups.first
         val offDaysGroup: DaysGroup = groups.second
         WorkDays.postValue(workDaysGroup)
@@ -186,7 +186,7 @@ object UserObject {
                 .days(offDaysGroup.daysNames)
                 .build())
             AWS.save(nu.build()){ res ->
-                val us = res.data as? User ?: return@save
+                if (res.data !is User) return@save
                 val activePeriod = TrackerService.getActivePeriod()
                 if (activePeriod==null) {
                     onComplete()

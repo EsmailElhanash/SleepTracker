@@ -28,7 +28,7 @@ android {
         minSdk 16
         targetSdk 33
         versionCode 1
-        versionName "upgrade"
+        versionName "dep-upg-code-improve-1"
         multiDexEnabled true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

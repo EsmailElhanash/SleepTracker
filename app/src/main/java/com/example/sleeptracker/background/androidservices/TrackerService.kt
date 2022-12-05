@@ -86,7 +86,7 @@ class TrackerService : Service(){
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 PendingIntent.getActivity(applicationContext, 145, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
             } else {
-                PendingIntent.getActivity(applicationContext, 145, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+                PendingIntent.getActivity(applicationContext, 145, notificationIntent, if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT } else { PendingIntent.FLAG_UPDATE_CURRENT })
             }
         }
         foreGroundNotification = NotificationsManager.createNotification(
@@ -108,7 +108,7 @@ class TrackerService : Service(){
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     PendingIntent.getActivity(applicationContext, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
                 } else {
-                    PendingIntent.getActivity(applicationContext, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+                    PendingIntent.getActivity(applicationContext, 0, notificationIntent, if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT } else { PendingIntent.FLAG_UPDATE_CURRENT })
                 }
             }
         foreGroundNotification = NotificationsManager.createNotification(
@@ -167,7 +167,7 @@ class TrackerService : Service(){
             } else {
                 PendingIntent.getService(applicationContext,
                     5555,
-                    intent,PendingIntent.FLAG_UPDATE_CURRENT)
+                    intent,if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT } else { PendingIntent.FLAG_UPDATE_CURRENT })
             }
         }
         alarmManager?.setRepeating(
@@ -189,7 +189,7 @@ class TrackerService : Service(){
             } else {
                 PendingIntent.getService(applicationContext,
                     5555,
-                    intent,PendingIntent.FLAG_UPDATE_CURRENT)
+                    intent,if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT } else { PendingIntent.FLAG_UPDATE_CURRENT })
             }
         }
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
