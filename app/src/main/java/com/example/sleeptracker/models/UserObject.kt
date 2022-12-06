@@ -161,6 +161,20 @@ object UserObject {
                 }
                 USER.postValue(it.item())
             },{},{})
+
+        Amplify.DataStore.observe(
+            User::class.java,
+            {}, {
+                if (USER.value == null) {
+                    createDaysGroup(it.item().offDay, GroupType.OFF_DAYS).apply {
+                        OffDays.postValue(this)
+                    }
+                    createDaysGroup(it.item().workday, GroupType.WORK_DAYS).apply {
+                        WorkDays.postValue(this)
+                    }
+                }
+                USER.postValue(it.item())
+            },{},{})
     }
 
 

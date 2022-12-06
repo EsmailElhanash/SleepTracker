@@ -1,11 +1,14 @@
 package com.example.sleeptracker.ui.survey
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.text.method.LinkMovementMethod
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -16,7 +19,9 @@ import androidx.core.text.HtmlCompat
 import androidx.core.view.setPadding
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.amplifyframework.kotlin.core.Amplify
 import com.amplifyframework.core.model.temporal.Temporal
+import com.amplifyframework.datastore.DataStoreException
 import com.amplifyframework.datastore.generated.model.SurveyEntry
 import com.example.sleeptracker.R
 import com.example.sleeptracker.aws.AWS
@@ -28,6 +33,10 @@ import com.example.sleeptracker.ui.survey.utils.SurveyPage
 import com.example.sleeptracker.ui.survey.utils.SurveyQuestion
 import com.example.sleeptracker.ui.survey.utils.getSurvey3Answers
 import com.example.sleeptracker.utils.getLiveDataValueOnce
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.util.*
 
@@ -51,6 +60,7 @@ class SurveyActivity : AppCompatActivity() {
     private val pagesCount = 3
 
     private var surveyCondition: Int? = null
+    private var progressView : View? = null
 
     companion object{
         const val SURVEY_CASE_EXTRA = "SURVEY_CASE"
@@ -77,7 +87,7 @@ class SurveyActivity : AppCompatActivity() {
            try {
                val id = 13132
                cancel(id)
-           }catch (e:Exception){}
+           }catch (_:Exception){}
         }
     }
 
@@ -153,10 +163,36 @@ class SurveyActivity : AppCompatActivity() {
                     it.pickedAnswerValue = 0
                 }
             }
-            saveAnswers{
-                checkScore()
+
+            CoroutineScope(Dispatchers.IO).launch {
+                runOnUiThread {
+                    showProgressIndicator()
+                }
+                saveAnswers()
+                runOnUiThread {
+                    checkScore()
+                }
             }
         }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun showProgressIndicator() {
+        binding.root.visibility = View.GONE
+        progressView = LayoutInflater.from(this)
+            .inflate(R.layout.progress_view, binding.root as ViewGroup, false)
+
+        progressView?.findViewById<TextView>(R.id.progressText)?.text = "Loading"
+        val myDialog = AlertDialog.Builder(this)
+            .setView(progressView)
+            .setOnDismissListener {
+            }
+            .setOnCancelListener {
+
+            }
+            .create()
+
+        myDialog.show()
     }
 
     private fun checkScore() {
@@ -217,7 +253,7 @@ class SurveyActivity : AppCompatActivity() {
             })
         }
 
-        if (message1.isNotEmpty() or message2.isNotEmpty()){
+        if (message1.isNotEmpty() || message2.isNotEmpty()){
             AlertDialog.Builder(this)
                 .setView(layout)
                 .setTitle("Score notification")
@@ -245,11 +281,12 @@ class SurveyActivity : AppCompatActivity() {
         finish()
     }
 
-    private fun saveAnswers(onCompleteCallback: () -> Unit) {
+    private suspend fun saveAnswers() {
         val uid = AWS.uid()?:return
         val message = "Saving answers"
-        Toast.makeText(applicationContext,message,Toast.LENGTH_LONG).show()
-
+        runOnUiThread {
+            Toast.makeText(applicationContext,message,Toast.LENGTH_LONG).show()
+        }
         val survey1 = JSONObject()
         survey1.put("phq9Score" , surveyPage1.getPhqScore())
         survey1.put("gad7Score" , surveyPage1.getGadScore())
@@ -284,14 +321,14 @@ class SurveyActivity : AppCompatActivity() {
             .userId(uid)
             .id("Survey:$time-User:$uid")
             .build()
-        AWS.save(surveyEntry){
-            saveDate {
-                onCompleteCallback()
-            }
-        }
+
+        try {
+            Amplify.DataStore.save(surveyEntry)
+            saveDate()
+        }catch (_: DataStoreException){ }
     }
 
-    private fun saveDate(onCompleteCallback: () -> Unit) {
+    private suspend fun saveDate() {
         val nowMS = Calendar.getInstance().timeInMillis
 
         UserObject.user.getLiveDataValueOnce {
@@ -302,9 +339,12 @@ class SurveyActivity : AppCompatActivity() {
                 }.retakeSurveyPeriod(retakeSurveyPeriod)
                     .build()
             }
-            AWS.save(u){
-                onCompleteCallback()
+            runBlocking {
+                try {
+                    Amplify.DataStore.save(u)
+                }catch (_:DataStoreException){}
             }
+
         }
 
     }
