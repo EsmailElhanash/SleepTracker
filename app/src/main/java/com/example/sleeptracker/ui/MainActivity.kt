@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity()  {
     companion object {
         var TEST = BuildConfig.DEBUG
         const val TAG  = "MainActivity"
-        const val c  = 999900007
+        var c  = 999900015
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

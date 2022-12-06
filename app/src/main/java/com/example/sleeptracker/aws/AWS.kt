@@ -78,15 +78,6 @@ object AWS {
                 amplifyRetry()
             }
         )
-        Amplify.Hub.subscribe(
-            HubChannel.DATASTORE,
-            { it.name == DataStoreChannelEventName.SUBSCRIPTION_DATA_PROCESSED.toString() &&
-                    (it.data as ModelWithMetadata<*> ).model is User
-            },
-            {
-                Log.i("MyAmplifyApp", "User has a network connection? ")
-            }
-        )
 
         Amplify.Hub.subscribe(HubChannel.AUTH,
             {
