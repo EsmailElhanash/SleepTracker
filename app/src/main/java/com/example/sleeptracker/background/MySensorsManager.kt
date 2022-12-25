@@ -10,7 +10,7 @@ import com.example.sleeptracker.models.SleepPeriod
 import kotlinx.coroutines.*
 import kotlin.math.sqrt
 
-class MySensorsManager(private val period: SleepPeriod) : SensorEventListener {
+class MySensorsManager(private val sleepPeriod: SleepPeriod) : SensorEventListener {
     private var magnitudePrevious = 0.0
     private var currentAccelerometerReading: Double = 0.0
     private var mSensorManager: SensorManager? = null
@@ -38,10 +38,10 @@ class MySensorsManager(private val period: SleepPeriod) : SensorEventListener {
                 currentAccelerometerReading = magnitudeDelta
                 val uid = Amplify.Auth.currentUser?.userId
                 if (uid != null) {
-                    period.saveAccelerometerReading(
+                    sleepPeriod.saveAccelerometerReading(
                         currentAccelerometerReading
                     )
-                    period.saveStepTime()
+                    sleepPeriod.saveStepTime()
                 }
                 CoroutineScope(Dispatchers.Main).launch {
                     pauseAccelerometerSensor()

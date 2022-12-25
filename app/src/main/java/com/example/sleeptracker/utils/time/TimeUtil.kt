@@ -1,6 +1,6 @@
 package com.example.sleeptracker.utils.time
 
-import com.example.sleeptracker.objects.Period
+import com.example.sleeptracker.objects.TimePeriod
 import com.example.sleeptracker.objects.TimePoint
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -142,7 +142,7 @@ object TimeUtil {
         return calendar.timeInMillis
     }
 
-    fun getCorrectEventTimeMS(p: Period ,eventTimeString: String) : Long? {
+    fun getCorrectEventTimeMS(p: TimePeriod, eventTimeString: String) : Long? {
         val eventTimeMS = getFractionalExactDate(p.getBasicID(),eventTimeString) ?: return null
         return when {
             eventTimeMS>=p.periodStartMS -> {

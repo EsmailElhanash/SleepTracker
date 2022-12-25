@@ -4,11 +4,11 @@ import com.example.sleeptracker.utils.MINUTE_IN_MS
 import com.example.sleeptracker.utils.time.IDFormatter
 import com.example.sleeptracker.utils.time.TimeUtil
 
-data class Period(
+data class TimePeriod(
         val periodStartMS : Long,
         val periodEndMS : Long,
 ){
-    var periodPortions : ArrayList<Period> = arrayListOf()
+    var timePeriodPortions : ArrayList<TimePeriod> = arrayListOf()
     init {
         if(periodEndMS-periodStartMS>10* MINUTE_IN_MS){
             makePeriodPortions()
@@ -41,7 +41,7 @@ data class Period(
     private fun makePeriodPortions() {
         val step = 10 * MINUTE_IN_MS
         for (p in periodStartMS..periodEndMS step step){
-            periodPortions.add(Period(p+1,p+step))
+            timePeriodPortions.add(TimePeriod(p+1,p+step))
         }
     }
 

@@ -8,7 +8,7 @@ apply plugin: 'kotlin-android'
 
 android {
     compileSdk 33
-    buildToolsVersion "30.0.3"
+    buildToolsVersion "33.0.1"
 
     signingConfigs {
         release {
@@ -62,13 +62,13 @@ dependencies {
     implementation 'com.amplifyframework:core-kotlin:0.19.4'
     implementation 'com.amplifyframework:aws-datastore:1.35.3'
 
-    implementation 'com.amplifyframework:core:1.35.4'
+    implementation 'com.amplifyframework:core:1.37.2'
     implementation project(path: ':app2')
 
     // Support for Java 8 features
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'
 
-    implementation 'com.amplifyframework:aws-auth-cognito:1.35.3'
+    implementation 'com.amplifyframework:aws-auth-cognito:1.37.2'
     implementation 'com.amplifyframework:aws-api:1.35.3'
 
     implementation 'androidx.appcompat:appcompat:1.5.1'

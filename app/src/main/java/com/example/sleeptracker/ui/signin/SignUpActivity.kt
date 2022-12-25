@@ -18,6 +18,7 @@ import androidx.core.text.HtmlCompat
 import androidx.core.view.children
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.amplifyframework.auth.AuthUserAttributeKey
+import com.amplifyframework.auth.options.AuthSignInOptions
 import com.amplifyframework.auth.options.AuthSignUpOptions
 import com.amplifyframework.core.Amplify
 import com.amplifyframework.datastore.generated.model.DayGroup
@@ -26,9 +27,6 @@ import com.example.sleeptracker.R
 import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.databinding.ActivitySignUpBinding
-import com.example.sleeptracker.models.UserObject
-import com.example.sleeptracker.objects.DaysGroup
-import com.example.sleeptracker.objects.GroupType
 import com.example.sleeptracker.objects.TimePoint
 import com.example.sleeptracker.ui.ConsentActivity
 import com.example.sleeptracker.ui.MainActivity
@@ -40,6 +38,7 @@ import com.example.sleeptracker.utils.time.TimePickerListener
 import com.example.userdataapp.App2Service
 import com.example.userdataapp.SignUpStrings
 import com.google.android.material.radiobutton.MaterialRadioButton
+import java.util.Calendar
 import kotlin.collections.HashMap
 
 
@@ -56,7 +55,6 @@ class SignUpActivity : AppCompatActivity()
     private var id1 : String? = null
     private var id2 : String? = null
     private var userCreated = false
-    private val user : UserModel by viewModels()
 
     private val app2SignUpReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -113,7 +111,8 @@ class SignUpActivity : AppCompatActivity()
         binding.ethnicGroups.ethnicRadioGroup.check(R.id.asian_ethnic)
         binding.nameInput.editText?.setText("eeee0000")
         binding.ageInput.editText?.setText("22")
-        binding.emailInput.editText?.setText("esmailelhanash${MainActivity.c}@gmail.com")
+//        binding.emailInput.editText?.setText("esmailelhanash${MainActivity.c}@gmail.com")
+        binding.emailInput.editText?.setText("esmailelhanash${Calendar.getInstance().timeInMillis/60000}@gmail.com")
         binding.genderPicker.setSelection(1)
         binding.passwordInput.editText?.setText("eeee1111")
         binding.passwordConfirmInput.editText?.setText("eeee1111")
@@ -176,7 +175,7 @@ class SignUpActivity : AppCompatActivity()
                 }
                 onSidReady(id)
 
-                Amplify.Auth.signIn(email,pw, {
+                Amplify.Auth.signIn(email,pw, AuthSignInOptions.defaults(), {
                     if (it.isSignInComplete) {
                         id1 = id
                         createUser()
@@ -224,13 +223,11 @@ class SignUpActivity : AppCompatActivity()
                 onFailure("error occurred")
                 return
             }
-            val workDays = createWorkDaysEntry(daysGroups.first)
-            val offDays = createOffDaysEntry(daysGroups.second)
 
             val u = User.builder()
                 .sid(id2)
-                .offDay(offDays)
-                .workday(workDays)
+                .offDay(daysGroups.second)
+                .workday(daysGroups.first)
                 .retakeSurveyPeriod(28)
                 .id(id1)
                 .build()
@@ -238,7 +235,6 @@ class SignUpActivity : AppCompatActivity()
             AWS.save(u){
                 if (it.success){
                     runOnUiThread {
-                        UserObject
                         val consentIntent = Intent(this,ConsentActivity::class.java)
                         startActivity(consentIntent)
                     }
@@ -264,23 +260,7 @@ class SignUpActivity : AppCompatActivity()
         }
     }
 
-    private fun createWorkDaysEntry( workDays: DaysGroup): DayGroup{
-        return DayGroup.builder()
-            .sleepTime(workDays.sleepTime.toString())
-            .wakeUpTime(workDays.wakeTime.toString())
-            .days(workDays.daysNames)
-            .build()
-    }
-
-    private fun createOffDaysEntry(offDays: DaysGroup) : DayGroup{
-        return DayGroup.builder()
-            .sleepTime(offDays.sleepTime.toString())
-            .wakeUpTime(offDays.wakeTime.toString())
-            .days(offDays.daysNames)
-            .build()
-    }
-
-    private fun getWorkAndOffDaysGroups(): Pair<DaysGroup, DaysGroup>? {
+    private fun getWorkAndOffDaysGroups(): Pair<DayGroup, DayGroup>? {
         if (workDaySleepTime == null || workDayWakeTime == null || offDaySleepTime == null || offDayWakeTime == null) {
             return null
         }
@@ -305,10 +285,17 @@ class SignUpActivity : AppCompatActivity()
                 offDays.add(it.text.toString())
             }
         }
-        val workGroup =
-            DaysGroup(workDays, GroupType.WORK_DAYS, workDaySleepTime!!, workDayWakeTime!!)
-        val offGroup =
-            DaysGroup(offDays, GroupType.WORK_DAYS, offDaySleepTime!!, offDayWakeTime!!)
+        val workGroup =DayGroup.builder()
+            .sleepTime(workDaySleepTime?.toString())
+            .wakeUpTime(workDayWakeTime?.toString())
+            .days(workDays)
+            .build()
+
+        val offGroup =DayGroup.builder()
+            .sleepTime(offDaySleepTime?.toString())
+            .wakeUpTime(offDayWakeTime?.toString())
+            .days(offDays)
+            .build()
         return Pair(workGroup, offGroup)
     }
 

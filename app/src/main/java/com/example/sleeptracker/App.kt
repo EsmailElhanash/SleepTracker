@@ -5,6 +5,7 @@ import android.app.AlarmManager
 import android.app.Application
 import android.app.PendingIntent
 import android.content.Context
+import android.content.ContextParams
 import android.content.Intent
 import android.os.Build
 import android.util.Log
@@ -31,6 +32,7 @@ import java.util.concurrent.TimeUnit
 class App : Application() {
 
     companion object{
+        lateinit var INSTANCE : Application
         @SuppressLint("UnspecifiedImmutableFlag")
         fun restart (context: Context){
             val mainIntent =
@@ -44,25 +46,30 @@ class App : Application() {
         }
     }
     override fun onCreate() {
-        super.onCreate()
+        INSTANCE = this
+        initAws()
         handleExceptions()
+        super.onCreate()
     }
 
 
     private fun handleExceptions() {
         Thread.setDefaultUncaughtExceptionHandler { _, ex ->
-            Intent(applicationContext,AlarmService::class.java).also {
-                ContextCompat.startForegroundService(applicationContext,it)
-            }
+            if (AWS.uid()!=null)
+                Intent(applicationContext,AlarmService::class.java).also {
+                    ContextCompat.startForegroundService(applicationContext,it)
+                }
             FirebaseCrashlytics.getInstance().recordException(ex)
         }
     }
 }
 
-fun initAws (context:Context , onSuccess : ()->Unit){
+private fun initAws (){
+    val context = App.INSTANCE.applicationContext
+    Log.d("APP1 package name = ", App.INSTANCE.packageName)
+    Log.d("APP1 package context = ", context.toString())
     try{
         val datastorePlugin = AWSDataStorePlugin.builder().run {
-
             dataStoreConfiguration(
                 DataStoreConfiguration.builder()
                     .doSyncRetry(true)
@@ -89,11 +96,8 @@ fun initAws (context:Context , onSuccess : ()->Unit){
         )
         AWS.hub()
 
-        onSuccess()
-    }catch (e: AmplifyException){
-        if (e is Amplify.AlreadyConfiguredException) {
-            onSuccess()
-            return
-        }
+    }catch (e: Exception){
+        Log.d("amplify conf exception", "exception: $e")
+
     }
 }

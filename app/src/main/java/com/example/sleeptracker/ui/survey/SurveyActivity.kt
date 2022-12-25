@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
@@ -26,17 +27,16 @@ import com.amplifyframework.datastore.generated.model.SurveyEntry
 import com.example.sleeptracker.R
 import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.databinding.ActivitySurveyBinding
-import com.example.sleeptracker.models.UserObject
+import com.example.sleeptracker.models.UserModel
+import com.example.sleeptracker.models.getUserValueSuspendable
 import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.ui.survey.utils.PrepareQuestions
 import com.example.sleeptracker.ui.survey.utils.SurveyPage
 import com.example.sleeptracker.ui.survey.utils.SurveyQuestion
 import com.example.sleeptracker.ui.survey.utils.getSurvey3Answers
-import com.example.sleeptracker.utils.getLiveDataValueOnce
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.util.*
 
@@ -61,6 +61,7 @@ class SurveyActivity : AppCompatActivity() {
 
     private var surveyCondition: Int? = null
     private var progressView : View? = null
+    val user : UserModel by viewModels()
 
     companion object{
         const val SURVEY_CASE_EXTRA = "SURVEY_CASE"
@@ -331,21 +332,18 @@ class SurveyActivity : AppCompatActivity() {
     private suspend fun saveDate() {
         val nowMS = Calendar.getInstance().timeInMillis
 
-        UserObject.user.getLiveDataValueOnce {
-            val u = with(it.copyOfBuilder()){
-                when (surveyCondition) {
-                    SURVEY_CASE_1 -> surveyLastUpdate(Temporal.DateTime(Date(nowMS),0))
-                    else -> this
-                }.retakeSurveyPeriod(retakeSurveyPeriod)
-                    .build()
-            }
-            runBlocking {
-                try {
-                    Amplify.DataStore.save(u)
-                }catch (_:DataStoreException){}
-            }
-
+        val user = getUserValueSuspendable() ?: return
+        val u = with(user.copyOfBuilder()){
+            when (surveyCondition) {
+                SURVEY_CASE_1 -> surveyLastUpdate(Temporal.DateTime(Date(nowMS),0))
+                else -> this
+            }.retakeSurveyPeriod(retakeSurveyPeriod)
+                .build()
         }
+        try {
+            Amplify.DataStore.save(u)
+        }catch (_:DataStoreException){}
+
 
     }
 

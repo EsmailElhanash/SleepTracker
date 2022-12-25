@@ -5,6 +5,8 @@ import android.content.Intent
 import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
+import com.amazonaws.mobile.client.AWSMobileClient
+import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUserPool
 import com.amplifyframework.AmplifyException
 import com.amplifyframework.api.aws.AWSApiPlugin
 import com.amplifyframework.api.graphql.model.ModelMutation
@@ -42,7 +44,6 @@ class SignUpService : Service() {
                 .userAttribute(AuthUserAttributeKey.email(), email)
                 .build()
             val options2 = AuthSignInOptions.defaults()
-
             Amplify.Auth.signUp(email, pw, options,
                 let@ {signUpResult->
                     val id = signUpResult.user?.userId
@@ -107,14 +108,18 @@ class SignUpService : Service() {
 
         startService(intent)
         stopSelf()
-    }
 
+    }
     private fun configureAws(onSuccess:()-> Unit){
         try{
+
+
+            val context = this
             Amplify.addPlugin(AWSApiPlugin())
             Amplify.addPlugin(AWSCognitoAuthPlugin())
-            Amplify.configure(AmplifyConfiguration.fromConfigFile(this, R.raw.amplifyconfiguration2),this)
+            Amplify.configure(AmplifyConfiguration.fromConfigFile(context, R.raw.amplifyconfiguration2),context)
             Log.d("configureAws", "succ")
+            Log.d("APP2 base context= ", context.toString())
             onSuccess()
         }catch (e: AmplifyException){
             if (e is Amplify.AlreadyConfiguredException) {
