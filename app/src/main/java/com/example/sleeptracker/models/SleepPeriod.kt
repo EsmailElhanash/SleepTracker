@@ -9,13 +9,13 @@ import com.amplifyframework.datastore.generated.model.Session
 import com.amplifyframework.datastore.generated.model.SubPeriod
 import com.amplifyframework.datastore.generated.model.TrackerPeriod
 import com.example.sleeptracker.aws.AWS
-import com.example.sleeptracker.objects.Period
+import com.example.sleeptracker.objects.TimePeriod
 import com.example.sleeptracker.utils.MINUTE_IN_MS
 import com.example.sleeptracker.utils.time.TimeUtil
 import java.util.*
 
 
-class SleepPeriod(val period: Period, initState : String) {
+class SleepPeriod(val timePeriod: TimePeriod, initState : String) {
     companion object{
         private const val saveEvery = 30000L
         private const val delayBWModels = 2000L
@@ -23,9 +23,9 @@ class SleepPeriod(val period: Period, initState : String) {
     }
 
 
-    private val TAG = "SleepPeriod ${period.getPeriodID()}"
+    private val TAG = "SleepPeriod ${timePeriod.getPeriodID()}"
 
-    val pid = "${period.getPeriodID()}- UserID:${AWS.uid()}"
+    val pid = "${timePeriod.getPeriodID()}- UserID:${AWS.uid()}"
 
     private var newData = false
         set(value) {
@@ -69,8 +69,8 @@ class SleepPeriod(val period: Period, initState : String) {
             }
         )
         // add initial movement count 0 to all sub periods
-        synchronized(period.periodPortions){
-            repeat(period.periodPortions.size) {
+        synchronized(timePeriod.timePeriodPortions){
+            repeat(timePeriod.timePeriodPortions.size) {
                 subPeriodsMovementCount.add(0)
             }
         }
@@ -79,15 +79,13 @@ class SleepPeriod(val period: Period, initState : String) {
 
 
     private fun saveLoop() {
-
         while (true) {
             if (newData) {
                 newData = false
-
                 AWS.save(
                     TrackerPeriod.builder()
-                        .wakeUpTime(period.getEndTime())
-                        .sleepTime(period.getStartTime())
+                        .wakeUpTime(timePeriod.getEndTime())
+                        .sleepTime(timePeriod.getStartTime())
                         .createdAt(Temporal.DateTime(createdAt, 0))
                         .userId(AWS.uid())
                         .id(pid)
@@ -116,8 +114,8 @@ class SleepPeriod(val period: Period, initState : String) {
             if (newSubPeriodData) {
                 newSubPeriodData = false
                 run {
-                    synchronized(period.periodPortions){
-                        period.periodPortions.forEachIndexed { index, subPeriod ->
+                    synchronized(timePeriod.timePeriodPortions){
+                        timePeriod.timePeriodPortions.forEachIndexed { index, subPeriod ->
                             val nowMS = Calendar.getInstance().timeInMillis
                             if (nowMS in subPeriod.periodStartMS..subPeriod.periodEndMS) {
                                 val subPid = "${subPeriod.getPeriodID()} - pid:$pid"
@@ -145,8 +143,8 @@ class SleepPeriod(val period: Period, initState : String) {
             newData = false
             AWS.save(
                 TrackerPeriod.builder()
-                    .wakeUpTime(period.getEndTime())
-                    .sleepTime(period.getStartTime())
+                    .wakeUpTime(timePeriod.getEndTime())
+                    .sleepTime(timePeriod.getStartTime())
                     .createdAt(Temporal.DateTime(createdAt,0))
                     .userId(AWS.uid())
                     .id(pid)
@@ -197,8 +195,8 @@ class SleepPeriod(val period: Period, initState : String) {
             if (newSubPeriodData){
                 newSubPeriodData = false
                 run {
-                    synchronized(period.periodPortions){
-                        period.periodPortions.forEachIndexed let@{ index, subPeriod ->
+                    synchronized(timePeriod.timePeriodPortions){
+                        timePeriod.timePeriodPortions.forEachIndexed let@{ index, subPeriod ->
                             val nowMS = Calendar.getInstance().timeInMillis
                             if (subPeriod.periodStartMS < nowMS + 30 * MINUTE_IN_MS) {
                                 return@let
@@ -240,8 +238,8 @@ class SleepPeriod(val period: Period, initState : String) {
 
     fun saveStepTime(){
         val nowMS = Calendar.getInstance().timeInMillis
-        synchronized(period.periodPortions){
-            period.periodPortions.forEachIndexed { index, sp ->
+        synchronized(timePeriod.timePeriodPortions){
+            timePeriod.timePeriodPortions.forEachIndexed { index, sp ->
                 if (nowMS in sp.periodStartMS..sp.periodEndMS) {
                     subPeriodsMovementCount[index]++
                     setNewSubPeriodData()
@@ -263,7 +261,7 @@ class SleepPeriod(val period: Period, initState : String) {
         setNewData()
     }
 
-    fun calculateSleepDuration(sessions : HashMap<Long,Period> ,onCompleteCallback: ()->Unit) {
+    fun calculateSleepDuration(sessions : HashMap<Long,TimePeriod>, onCompleteCallback: ()->Unit) {
         val longestPeriod = getLongestPeriod(sessions,sortedStates)
         if (longestPeriod==null) {
             onCompleteCallback()
@@ -276,7 +274,7 @@ class SleepPeriod(val period: Period, initState : String) {
         onCompleteCallback()
     }
 
-    private fun createSortedDeviceStatesList(p: Period, onCompleteCallback: ((sortedStates: SortedMap<Long,String>) -> Unit)){
+    private fun createSortedDeviceStatesList(p: TimePeriod, onCompleteCallback: ((sortedStates: SortedMap<Long,String>) -> Unit)){
         forceSave {
             AWS.getPredicate(
                 Where.matches(
@@ -296,11 +294,11 @@ class SleepPeriod(val period: Period, initState : String) {
 
     }
 
-    fun calculateSessions(onCompleteCallback: (sessions : HashMap<Long,Period>) -> Unit){
-        createSortedDeviceStatesList(period){
+    fun calculateSessions(onCompleteCallback: (sessions : HashMap<Long,TimePeriod>) -> Unit){
+        createSortedDeviceStatesList(timePeriod){
             var lastEvent : String? = null
             var lastEventTime = 0L
-            val sessions : HashMap<Long,Period> = hashMapOf()
+            val sessions : HashMap<Long,TimePeriod> = hashMapOf()
 
             for ((time , event) in it){
                 if (event == "User present") {
@@ -316,7 +314,7 @@ class SleepPeriod(val period: Period, initState : String) {
                             // here we have a session
                             // lastEventTime is session start in this case
                             // time is session end in this case
-                            sessions[lastEventTime] = Period(lastEventTime, time)
+                            sessions[lastEventTime] = TimePeriod(lastEventTime, time)
                         }
                         lastEvent = event
                         lastEventTime = time
@@ -335,7 +333,7 @@ class SleepPeriod(val period: Period, initState : String) {
         }
     }
 
-    private fun saveSessions(sessions0:HashMap<Long,Period> ,function: () -> Unit) {
+    private fun saveSessions(sessions0:HashMap<Long,TimePeriod>, function: () -> Unit) {
         sessions = mutableListOf()
         sessions0.values.forEach {
             sessions?.add(
@@ -348,9 +346,9 @@ class SleepPeriod(val period: Period, initState : String) {
     fun calculateAverageMovementCount(onCompleteCallback: ()-> Unit){
             forceSave {
                 var averageMovementCount = 0
-                val sortedPortions = sortedMapOf<Long,Period>()
-                synchronized(period.periodPortions){
-                    period.periodPortions.forEach {
+                val sortedPortions = sortedMapOf<Long,TimePeriod>()
+                synchronized(timePeriod.timePeriodPortions){
+                    timePeriod.timePeriodPortions.forEach {
                         sortedPortions[it.periodStartMS] = it
                     }
                 }
@@ -401,7 +399,7 @@ class SleepPeriod(val period: Period, initState : String) {
         return "$hours:$minutes"
     }
 
-    private fun getLongestPeriod(sessions:HashMap<Long,Period> ,eventsSortedMap:SortedMap<Long,String>):Long?{
+    private fun getLongestPeriod(sessions:HashMap<Long,TimePeriod>, eventsSortedMap:SortedMap<Long,String>):Long?{
         val lastPresence = getLastUserPresenceEventTime(eventsSortedMap) ?: return null
         val firstOff = getFirstOffEventTime(eventsSortedMap) ?: return null
         val longest1 =  lastPresence - firstOff
@@ -409,7 +407,7 @@ class SleepPeriod(val period: Period, initState : String) {
         return longest1 - sessionsDurations
     }
 
-    private fun getSessionsDurations(sessions: HashMap<Long, Period>): Long {
+    private fun getSessionsDurations(sessions: HashMap<Long, TimePeriod>): Long {
         var duration = 0L
         sessions.values.forEach {
             duration += it.periodEndMS - it.periodStartMS
@@ -456,7 +454,7 @@ class SleepPeriod(val period: Period, initState : String) {
     private var actualWakeUpTime: String? = null
     private var avgMovementCount: String? = null
     private var actualSleepTime: String? = null
-    private var sessions: MutableList<Period>? = null
+    private var sessions: MutableList<TimePeriod>? = null
     private var sleepDuration: String? = null
     private var durationInNumbers: String? = null
     private var disturbancesCount: String? = null

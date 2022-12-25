@@ -15,9 +15,7 @@ import com.amplifyframework.datastore.generated.model.TrackerPeriod
 import com.example.sleeptracker.R
 import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.background.receivers.SurveyAlarmReceiver
-import com.example.sleeptracker.initAws
-import com.example.sleeptracker.models.UserModel
-import com.example.sleeptracker.models.UserObject
+import com.example.sleeptracker.models.getNonNullUserValue
 import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.utils.LAST_SURVEY_NOTIFICATION
 import com.example.sleeptracker.utils.PREFERENCES_NAME
@@ -36,11 +34,8 @@ const val SURVEY_ALARM_ID = 12321
 class SurveyService : Service() {
 
     private var isForeground: Boolean = false
-    private lateinit var user : UserModel
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        initAws(this){
-            user = UserModel()
-            goForeGround()
+        goForeGround()
             scheduleSurveyCheck()
             CoroutineScope(Dispatchers.IO).launch {
                 checkSurveyConditionOne {
@@ -54,7 +49,6 @@ class SurveyService : Service() {
                 delay(60000)
                 if (isForeground) stopForeground()
             }
-        }
 
         return START_NOT_STICKY
     }
@@ -63,30 +57,31 @@ class SurveyService : Service() {
         val pref = applicationContext.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
         val lastNotification = pref.getLong(LAST_SURVEY_NOTIFICATION, 0)
         if (nowMS<=lastNotification + DAY_IN_MS){
-            UserObject.getSurveyRetakePeriod {
-                onComplete(it)
+            getNonNullUserValue {
+                onComplete(it.retakeSurveyPeriod)
             }
             return
         }
+        getNonNullUserValue{
+            val lastC1 = it.surveyLastUpdate?.toDate()?.time ?: 0
+            val retake = it.retakeSurveyPeriod
+            try {
+                if (nowMS>=(lastC1+retake* DAY_IN_MS)){
+                    NotificationsManager.displaySurveyNotification(applicationContext)
+                    pref.edit().putLong(LAST_SURVEY_NOTIFICATION, nowMS).apply()
+                }
+                onComplete(retake)
+            } catch (e: Exception) {onComplete(retake)}
 
-        UserObject.getSurveyLastUpdatedCaseOne{ last1->
-            UserObject.getSurveyRetakePeriod { retake->
-                try {
-                    if (nowMS>=(last1+retake* DAY_IN_MS)){
-                        NotificationsManager.displaySurveyNotification(applicationContext)
-                        pref.edit().putLong(LAST_SURVEY_NOTIFICATION, nowMS).apply()
-                    }
-                    onComplete(retake)
-                } catch (e: Exception) {onComplete(retake)}
-            }
         }
+
 
     }
 
     private fun checkSurveyConditionTwo(onComplete: () -> Unit){
         val nowMS = Calendar.getInstance().timeInMillis
-        var s1 : Long? = null
-        var s2 : Long? = null
+        var s1: Long
+        var s2: Long
 
         val sortedMovementCount :SortedMap<Long,Int> = sortedMapOf()
         val sortedDisturbancesCount :SortedMap<Long,Int> = sortedMapOf()
@@ -155,15 +150,10 @@ class SurveyService : Service() {
             }
          }
 
-        UserObject.getSurveyLastUpdatedCaseOne{
-            s1 = it
-            if (s2!=null)checkDate(s1!!, s2!!)
-        }
-
-
-        UserObject.getSurveyLastUpdatedCaseTwo{
-            s2 = it
-            if (s1!=null) checkDate(s1!!, s2!!)
+        getNonNullUserValue{
+            s1 = it.surveyLastUpdate?.toDate()?.time ?: 0
+            s2 = it.surveyLastUpdate2?.time?.toDate()?.time ?: 0
+            checkDate(s1, s2)
         }
     }
 

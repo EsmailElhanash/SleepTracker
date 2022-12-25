@@ -1,11 +1,7 @@
 package com.example.sleeptracker.background.receivers
 
 import android.content.*
-import android.os.Build
 import androidx.core.content.ContextCompat
-import com.amplifyframework.core.Amplify
-import com.example.sleeptracker.App
-import com.example.sleeptracker.background.androidservices.SurveyService
 import com.example.sleeptracker.background.androidservices.TrackerService
 
 
@@ -33,7 +29,7 @@ class StateReceiver : BroadcastReceiver() {
     }
     private fun checkAwakeTime(appCtx:Context){
         val activePeriod = TrackerService.getActivePeriod()
-        val p = activePeriod?.period ?: return
+        val p = activePeriod?.timePeriod ?: return
 
         val nowMS = Calendar.getInstance().timeInMillis
         val periodStart = p.periodStartMS

@@ -9,13 +9,16 @@ import android.view.ViewGroup
 import android.widget.RadioButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.sleeptracker.R
+import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.database.utils.DBParameters.CONSENT_ACCEPTED
 import com.example.sleeptracker.database.utils.DBParameters.CONSENT_DECLINED
 import com.example.sleeptracker.databinding.ActivityConsentBinding
-import com.example.sleeptracker.models.UserObject
+import com.example.sleeptracker.models.UserModel
+import com.example.sleeptracker.models.getNonNullUserValue
 import com.example.sleeptracker.ui.survey.SurveyActivity
 import org.json.JSONObject
 
@@ -23,12 +26,12 @@ class ConsentActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityConsentBinding
     private var progressView : View? = null
+    private val userModel : UserModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityConsentBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
 
 
 
@@ -38,15 +41,19 @@ class ConsentActivity : AppCompatActivity() {
                 return@let
             }
             showProgressIndicator()
-            UserObject.updateConsent(getConsentAnswer(),run@{
+            getNonNullUserValue{
+                val editedUser = it.copyOfBuilder().consent(getConsentAnswer()).build()
+                AWS.save(editedUser){}
                 if (!isConsentAccepted()){
-                    runOnUiThread { showExitDialog() }
-                    return@run
+                    runOnUiThread {
+                        showExitDialog()
+                    }
+                    return@getNonNullUserValue
                 }
                 runOnUiThread{ showThanksDialog() }
-            },{
-                onFailure("error occurred")
-            })
+
+            }
+
         }
     }
 

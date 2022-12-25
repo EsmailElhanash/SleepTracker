@@ -10,63 +10,39 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.amplifyframework.datastore.generated.model.DayGroup
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.receivers.AlarmReceiver
 import com.example.sleeptracker.database.utils.DBParameters.DAYS
-import com.example.sleeptracker.initAws
-import com.example.sleeptracker.models.UserObject
-import com.example.sleeptracker.objects.DaysGroup
+import com.example.sleeptracker.models.getNonNullUserValue
 import com.example.sleeptracker.objects.TimePoint
 import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.utils.MINUTE_IN_MS
 import com.example.sleeptracker.utils.androidutils.NotificationType
 import com.example.sleeptracker.utils.androidutils.NotificationsManager
-import com.example.sleeptracker.utils.getLiveDataValueOnce
 import com.example.sleeptracker.utils.time.DAY_IN_MS
 import com.example.sleeptracker.utils.time.TimeUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.util.*
 
 
 class AlarmService : Service() {
     private var isForeground: Boolean = false
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        initAws(this) {
-            if (!isForeground) prepareAlarmStartTime()
-            else {
-                stopForeground()
-                prepareAlarmStartTime()
+        goForeGround()
+            getNonNullUserValue{
+                if (!isForeground) setAlarm(it.workday, it.offDay)
+                else {
+                    stopForeground()
+                    setAlarm(it.workday, it.offDay)
+                }
             }
-        }
+
+
         return START_NOT_STICKY
     }
 
-    private fun prepareAlarmStartTime() {
-        goForeGround()
-        var workDaysGroup : DaysGroup? = null
-        var offDaysGroup : DaysGroup? = null
-        UserObject.workDays.getLiveDataValueOnce{
-            workDaysGroup = it
-            if (offDaysGroup!=null)
-                setAlarm(workDaysGroup!!, offDaysGroup!!)
 
-        }
-        UserObject.offDays.getLiveDataValueOnce {
-            offDaysGroup = it
-            if (workDaysGroup!=null)
-                setAlarm(workDaysGroup!!, offDaysGroup!!)
-        }
-        CoroutineScope(Dispatchers.IO).launch{
-            delay(60000)
-            if (isForeground) stopForeground()
-        }
-    }
-
-
-    private fun setAlarm(workDaysGroup: DaysGroup,offDaysGroup: DaysGroup){
+    private fun setAlarm(workDaysGroup: DayGroup, offDaysGroup: DayGroup){
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
         if (alarmManager != null) {
             //Day of week , Saturday = 0 ... Friday = 6
@@ -75,13 +51,13 @@ class AlarmService : Service() {
                 val sleepTimePoint : TimePoint
                 val awakeTimePoint : TimePoint
                 when (dayName) {
-                    in workDaysGroup.daysNames -> {
-                        sleepTimePoint = workDaysGroup.sleepTime
-                        awakeTimePoint = workDaysGroup.wakeTime
+                    in workDaysGroup.days -> {
+                        sleepTimePoint = TimePoint.stringToObject(workDaysGroup.sleepTime) ?: return@forEachIndexed
+                        awakeTimePoint = TimePoint.stringToObject(workDaysGroup.wakeUpTime) ?: return@forEachIndexed
                     }
-                    in offDaysGroup.daysNames -> {
-                        sleepTimePoint = offDaysGroup.sleepTime
-                        awakeTimePoint = workDaysGroup.wakeTime
+                    in offDaysGroup.days -> {
+                        sleepTimePoint = TimePoint.stringToObject(offDaysGroup.sleepTime) ?: return@forEachIndexed
+                        awakeTimePoint = TimePoint.stringToObject(offDaysGroup.wakeUpTime) ?: return@forEachIndexed
                     }
                     else -> return
                 }

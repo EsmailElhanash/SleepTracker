@@ -18,16 +18,14 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.amplifyframework.core.Amplify
-import com.amplifyframework.core.Amplify.DataStore
-import com.example.sleeptracker.App
 import com.example.sleeptracker.R
+import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.background.androidservices.AlarmService
 import com.example.sleeptracker.background.androidservices.SurveyService
 import com.example.sleeptracker.database.utils.DBParameters
 import com.example.sleeptracker.databinding.ActivityHomeBinding
 import com.example.sleeptracker.models.UserModel
-import com.example.sleeptracker.models.UserObject
+import com.example.sleeptracker.models.getNonNullUserValue
 import com.example.sleeptracker.ui.statistics.DAILY_STATISTICS
 import com.example.sleeptracker.ui.statistics.STATISTICS_TYPE
 import com.example.sleeptracker.ui.statistics.StatisticsActivity
@@ -40,7 +38,7 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHomeBinding
     private lateinit var root : View
-    val user : UserModel by viewModels()
+    private val userModel : UserModel by viewModels()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,8 +56,6 @@ class HomeActivity : AppCompatActivity() {
         Intent(applicationContext, SurveyService::class.java).also {
             ContextCompat.startForegroundService(applicationContext,it)
         }
-
-
 
         binding.dailyStatisticsNavButton.setOnClickListener {
             startActivity(Intent(applicationContext, StatisticsActivity::class.java)
@@ -95,29 +91,29 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        user.offDays.observe(this){
+        userModel.offDays.observe(this){
             it ?: return@observe
             binding.sleepWakeTimesView.offDaysNames.apply {
                 this.visibility = View.VISIBLE
-                this.text = it.daysNames.toString()
+                this.text = it.days.toString()
             }
             val st = DBParameters.SLEEP_TIME + ": " +it.sleepTime.toString()
             binding.sleepWakeTimesView.offDaySleepTimeText.text = st
-            val wt = DBParameters.WAKEUP_TIME + ": " +it.wakeTime.toString()
+            val wt = DBParameters.WAKEUP_TIME + ": " +it.wakeUpTime.toString()
             binding.sleepWakeTimesView.offDayWakeTimeText.text = wt
         }
-        user.workDays.observe(this){
+        userModel.workDays.observe(this){
             it ?: return@observe
             binding.sleepWakeTimesView.workDaysNames.apply {
                 this.visibility = View.VISIBLE
-                this.text = it.daysNames.toString()
+                this.text = it.days.toString()
             }
             val st = DBParameters.SLEEP_TIME + ": " +it.sleepTime.toString()
             binding.sleepWakeTimesView.workdaySleepTimeText.text = st
-            val wt = DBParameters.WAKEUP_TIME + ": " + it.wakeTime.toString()
+            val wt = DBParameters.WAKEUP_TIME + ": " + it.wakeUpTime.toString()
             binding.sleepWakeTimesView.workDayWakeTimeText.text = wt
         }
-        checkLastSurvey(user)
+        checkLastSurvey()
     }
 
 
@@ -175,20 +171,19 @@ class HomeActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    private fun checkLastSurvey(user:UserModel){
-        val nowMS = Calendar.getInstance().timeInMillis
-        UserObject.getSurveyLastUpdatedCaseOne{
-            UserObject.getSurveyRetakePeriod { retakePeriod ->
-                try {
-                    if (nowMS >= (it + retakePeriod * DAY_IN_MS)) { //DONE... todo CRITICAL!!! ATTENTION CHANGE TO >=
-                        val i = Intent(this, SurveyActivity::class.java)
-                        i.putExtra(SurveyActivity.SURVEY_CASE_EXTRA, SurveyActivity.SURVEY_CASE_1)
-                        startActivity(i)
-                        finish()
-                    }
-                } catch (e: Exception) {
-                    Log.d("TAG", "onDataChange: ")
+    private fun checkLastSurvey(){
+        getNonNullUserValue {
+            val nowMS = Calendar.getInstance().timeInMillis
+            val lastSurveyUpdate1 = it.surveyLastUpdate?.toDate()?.time ?: 0
+            try {
+                if (nowMS >= ( lastSurveyUpdate1 + it.retakeSurveyPeriod * DAY_IN_MS)) {
+                    val i = Intent(this, SurveyActivity::class.java)
+                    i.putExtra(SurveyActivity.SURVEY_CASE_EXTRA, SurveyActivity.SURVEY_CASE_1)
+                    startActivity(i)
+                    finish()
                 }
+            } catch (e: Exception) {
+                Log.d("TAG", "onDataChange: ")
             }
         }
     }

@@ -12,14 +12,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.amplifyframework.core.Amplify
+import com.amplifyframework.datastore.generated.model.DayGroup
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.androidservices.AlarmService
 import com.example.sleeptracker.database.utils.DBParameters
 import com.example.sleeptracker.databinding.ActivitySettingsBinding
 import com.example.sleeptracker.models.UserModel
-import com.example.sleeptracker.models.UserObject
-import com.example.sleeptracker.objects.DaysGroup
-import com.example.sleeptracker.objects.GroupType
+import com.example.sleeptracker.models.getNonNullUserValue
 import com.example.sleeptracker.objects.TimePoint
 import com.example.sleeptracker.ui.signin.LoginActivity
 import com.example.sleeptracker.utils.androidutils.InputValidator
@@ -37,7 +36,7 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
     private var workDayWakeTime: TimePoint? = null
     private var offDaySleepTime: TimePoint? = null
     private var offDayWakeTime: TimePoint? = null
-    private val user : UserModel by viewModels()
+    private val userModel : UserModel by viewModels()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,7 +65,7 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
         binding.updateTimeButton.setOnClickListener {
             binding.updateTimeButton.isEnabled = false
             getWorkAndOffDaysGroups{
-                UserObject.updateDayGroups(it){
+                userModel.updateDayGroups(it){
                     ContextCompat.startForegroundService(applicationContext,Intent(applicationContext,AlarmService::class.java))
                 }
 
@@ -91,8 +90,8 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
             view.findViewById<MaterialCheckBox>(R.id.day6Checkbox),
         )
         daysCheckboxes.forEach { checkBox->
-            user.workDays.observe(this){
-                if(checkBox.text in it.daysNames){
+            userModel.workDays.observe(this){
+                if(checkBox.text in it.days){
                     checkBox.isChecked = true
                 }
             }
@@ -116,7 +115,7 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
         myDialog.show()
         myDialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
             getWorkAndOffDaysGroups(view){
-                UserObject.updateDayGroups(it){
+                userModel.updateDayGroups(it){
                     ContextCompat.startForegroundService(context.applicationContext,Intent(applicationContext, AlarmService::class.java))
                 }
             }
@@ -150,40 +149,47 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
             }
             onComplete(workDaysNames,offDaysNames)
         }else {
-            user.workDays.observe(this){
-                workDaysNames = ArrayList(it.daysNames)
+            userModel.workDays.observe(this){
+                workDaysNames = ArrayList(it.days)
                 if (offDaysNames!=null)
                     onComplete(workDaysNames!!, offDaysNames!!)
             }
 
-            user.offDays.observe(this){
-                offDaysNames = ArrayList(it.daysNames)
+            userModel.offDays.observe(this){
+                offDaysNames = ArrayList(it.days)
                 if (workDaysNames!=null)
                     onComplete(workDaysNames!!, offDaysNames!!)
             }
         }
     }
-    private fun getWorkAndOffDaysGroups(view: View? = null , onComplete:(Pair<DaysGroup, DaysGroup>)->Unit) {
+    private fun getWorkAndOffDaysGroups(view: View? = null , onComplete:(Pair<DayGroup, DayGroup>)->Unit) {
         var wNames:ArrayList<String>? = null
         var oNames:ArrayList<String>? = null
 
         val fire = {
-            UserObject.getWorkDaysOnce { workDaysGroup ->
-                if (wNames == null) {
-                    wNames = ArrayList(workDaysGroup.daysNames)
-                }
-                val workGroup =
-                    DaysGroup(wNames!!, GroupType.WORK_DAYS,
-                        workDaySleepTime?: workDaysGroup.sleepTime, workDayWakeTime?: workDaysGroup.wakeTime)
+            getNonNullUserValue {
 
-                UserObject.getOffDaysOnce { offDaysGroup ->
-                    if (oNames == null) {
-                        oNames = ArrayList(offDaysGroup.daysNames)
-                    }
-                    val offGroup =
-                        DaysGroup(oNames!!, GroupType.OFF_DAYS, offDaySleepTime?: offDaysGroup.sleepTime, offDayWakeTime?: offDaysGroup.wakeTime)
-                    onComplete(Pair(workGroup, offGroup))
+                if (wNames == null) {
+                    wNames = ArrayList(it.workday.days)
                 }
+
+                if (oNames == null) {
+                    oNames = ArrayList(it.offDay.days)
+                }
+
+                val workGroup =DayGroup.builder()
+                    .sleepTime(workDaySleepTime?.toString() ?: it.workday.sleepTime)
+                    .wakeUpTime(workDayWakeTime?.toString() ?: it.workday.wakeUpTime)
+                    .days(wNames)
+                    .build()
+
+                val offGroup =DayGroup.builder()
+                    .sleepTime(offDaySleepTime?.toString() ?: it.offDay.sleepTime)
+                    .wakeUpTime(offDayWakeTime?.toString() ?: it.offDay.wakeUpTime)
+                    .days(wNames)
+                    .build()
+
+                onComplete(Pair(workGroup, offGroup))
             }
         }
 
@@ -197,28 +203,28 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
     }
 
     private fun observeDayGroups(){
-        user.offDays.observe(this){
+        userModel.offDays.observe(this){
             it ?: return@observe
             binding.sleepWakeTimesView.offDaysNames.apply {
                 this.visibility = View.VISIBLE
-                this.text = it.daysNames.toString()
+                this.text = it.days.toString()
             }
             val st = DBParameters.SLEEP_TIME + ": " +it.sleepTime.toString()
             binding.sleepWakeTimesView.offDaySleepTimeText.text = st
-            val wt = DBParameters.WAKEUP_TIME + ": " +it.wakeTime.toString()
+            val wt = DBParameters.WAKEUP_TIME + ": " +it.wakeUpTime.toString()
             binding.sleepWakeTimesView.offDayWakeTimeText.text = wt
         }
 
 
-        user.workDays.observe(this){
+        userModel.workDays.observe(this){
             it ?: return@observe
             binding.sleepWakeTimesView.workDaysNames.apply {
                 this.visibility = View.VISIBLE
-                this.text = it.daysNames.toString()
+                this.text = it.days.toString()
             }
             val st = DBParameters.SLEEP_TIME + ": " +it.sleepTime.toString()
             binding.sleepWakeTimesView.workdaySleepTimeText.text = st
-            val wt = DBParameters.WAKEUP_TIME + ": " + it.wakeTime.toString()
+            val wt = DBParameters.WAKEUP_TIME + ": " + it.wakeUpTime.toString()
             binding.sleepWakeTimesView.workDayWakeTimeText.text = wt
         }
     }

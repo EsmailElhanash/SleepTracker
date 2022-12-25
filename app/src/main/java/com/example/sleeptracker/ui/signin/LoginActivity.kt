@@ -24,7 +24,8 @@ class LoginActivity : AppCompatActivity() {
 
     @SuppressLint("all")
     private fun setTest(){
-        binding.emailInputLogin.editText?.setText("esmailelhanash${MainActivity.c}@gmail.com")
+         binding.emailInputLogin.editText?.setText("esmailelhanash${MainActivity.c}@gmail.com")
+//        binding.emailInputLogin.editText?.setText("esmailelhanash@gmail.com")
         binding.passwordInputLogin.editText?.setText("eeee1111")
     }
     override fun onCreate(savedInstanceState: Bundle?) {
