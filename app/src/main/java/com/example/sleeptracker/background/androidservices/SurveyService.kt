@@ -15,6 +15,7 @@ import com.amplifyframework.datastore.generated.model.TrackerPeriod
 import com.example.sleeptracker.R
 import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.background.receivers.SurveyAlarmReceiver
+import com.example.sleeptracker.initAws
 import com.example.sleeptracker.models.getNonNullUserValue
 import com.example.sleeptracker.ui.MainActivity
 import com.example.sleeptracker.utils.LAST_SURVEY_NOTIFICATION
@@ -36,6 +37,7 @@ class SurveyService : Service() {
     private var isForeground: Boolean = false
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         goForeGround()
+        initAws(this){
             scheduleSurveyCheck()
             CoroutineScope(Dispatchers.IO).launch {
                 checkSurveyConditionOne {
@@ -49,6 +51,7 @@ class SurveyService : Service() {
                 delay(60000)
                 if (isForeground) stopForeground()
             }
+        }
 
         return START_NOT_STICKY
     }

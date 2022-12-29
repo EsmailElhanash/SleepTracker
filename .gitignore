@@ -1,3 +1,14 @@
+/.gradle/
+/gradle/
+/release-ks.jks
+/test-release-keystore.jks
+/.idea/
+/app/release/
+/app/lint-baseline.xml
+
+/app/amplify/
+/app2/amplify/
+
 #amplify-do-not-edit-begin
 amplify/\#current-cloud-backend
 amplify/.config/local-*
@@ -18,11 +29,3 @@ amplifytools.xcconfig
 .secret-*
 **.sample
 #amplify-do-not-edit-end
-
-/.gradle/
-/gradle/
-/release-ks.jks
-/test-release-keystore.jks
-/.idea/
-/app/release/
-/app/lint-baseline.xml

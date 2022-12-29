@@ -9,7 +9,7 @@ android {
     buildToolsVersion "30.0.3"
 
     defaultConfig {
-        minSdk 16
+        minSdk 24
         targetSdk 33
         multiDexEnabled true
 
@@ -33,11 +33,9 @@ android {
 }
 
 dependencies {
-    implementation 'com.amplifyframework:core:1.37.2'
-
-    implementation 'com.amplifyframework:aws-auth-cognito:1.37.2'
-    implementation 'com.amplifyframework:aws-api:1.35.3'
-    implementation 'com.amplifyframework:aws-datastore:1.35.3'
+    implementation 'com.amplifyframework:core:2.1.0'
+    implementation 'com.amplifyframework:aws-auth-cognito:2.1.0'
+    implementation 'com.amplifyframework:aws-api:2.1.0'
 
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.5.1'
@@ -47,5 +45,5 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.4'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
     implementation "androidx.core:core-ktx:1.9.0"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20"
 }

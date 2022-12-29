@@ -10,32 +10,35 @@ import com.amplifyframework.kotlin.core.Amplify as AmplifyKt
 
 
 fun getNonNullUserValue(onComplete: (user: User) -> Unit) {
-    val id = AWS.uid() ?: return
-    Amplify.DataStore.query(
-        User::class.java, Where.id(id),
-        {
-            val u = try {
-                it.next()
-            }catch (_:Exception){null}
-            if (u!=null){
-                onComplete(u)
-            }else {
-                Amplify.DataStore.observe(
-                    User::class.java, id,
-                    {}, { user->
-                        onComplete(user.item())
-                    },{},{})
-            }
-        },
-        {}
-    )
+    AWS.uid{
+        val id = it ?: return@uid
+        Amplify.DataStore.query(
+            User::class.java, Where.identifier(User::class.java,id),
+            { users ->
+                val u = try {
+                    users.next()
+                }catch (_:Exception){null}
+                if (u!=null){
+                    onComplete(u)
+                }else {
+                    Amplify.DataStore.observe(
+                        User::class.java, id,
+                        {}, { user->
+                            onComplete(user.item())
+                        },{},{})
+                }
+            },
+            {}
+        )
+    }
+
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
 suspend fun  getUserValueSuspendable() : User?{
-    val id = AWS.uid() ?: return null
+    val id = AmplifyKt.Auth.getCurrentUser().userId
     var u : User? = null
-    AmplifyKt.DataStore.query(User::class, Where.id(id))
+    AmplifyKt.DataStore.query(User::class, Where.identifier(User::class.java,id))
         .catch {
 
         }

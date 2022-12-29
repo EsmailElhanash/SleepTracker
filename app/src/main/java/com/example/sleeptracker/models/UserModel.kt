@@ -32,44 +32,48 @@ class UserModel : ViewModel() {
     }
 
     private fun loadUser(){
-        val id = AWS.uid() ?: return
-        Amplify.DataStore.query(
-            User::class.java, Where.identifier(User::class.java,id),
-            {
-                if (it.hasNext()){
-                    val u = it.next()
-                    if (_user.value == null) {
-                        _offDays.postValue(u.offDay)
-                        _workDays.postValue(u.workday)
+        AWS.uid {
+            val id = it ?: return@uid
+            Amplify.DataStore.query(
+                User::class.java, Where.identifier(User::class.java,id),
+                {
+                    if (it.hasNext()){
+                        val u = it.next()
+                        if (_user.value == null) {
+                            _offDays.postValue(u.offDay)
+                            _workDays.postValue(u.workday)
+                        }
+                        _user.postValue(u)
                     }
-                    _user.postValue(u)
-                }
-            },
-            {}
-        )
+                },
+                {}
+            )
+        }
+
     }
 
     private fun observeUser() {
-        val id = AWS.uid() ?: return
-        val predicate: QueryPredicate =
-            User.ID.eq(id)
-        val querySortBy = QuerySortBy("User", "id", QuerySortOrder.ASCENDING)
-        val options = ObserveQueryOptions(predicate, null)
-        Amplify.DataStore.observe(
-            User::class.java,id,
-            {}, let@{
-                val item = it.item()
-                if (_user.value == null) {
-                    _offDays.postValue(item.offDay)
-                    _workDays.postValue(item.workday)
-                }
-                _user.postValue(item)
-            },{},{})
+        AWS.uid {
+            val id = it ?: return@uid
+            val predicate: QueryPredicate =
+                User.ID.eq(id)
+            val querySortBy = QuerySortBy("User", "id", QuerySortOrder.ASCENDING)
+            val options = ObserveQueryOptions(predicate, null)
+            Amplify.DataStore.observe(
+                User::class.java, id,
+                {}, let@{
+                    val item = it.item()
+                    if (_user.value == null) {
+                        _offDays.postValue(item.offDay)
+                        _workDays.postValue(item.workday)
+                    }
+                    _user.postValue(item)
+                }, {}, {})
+        }
     }
 
 
     fun updateDayGroups(groups : Pair<DayGroup, DayGroup>, onComplete: () -> Unit){
-        Amplify.Auth?.currentUser?.userId ?: return
         val workDaysGroup: DayGroup = groups.first
         val offDaysGroup: DayGroup = groups.second
         _workDays.postValue(workDaysGroup)

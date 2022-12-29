@@ -19,7 +19,8 @@ import com.amplifyframework.datastore.generated.model.DayGroup
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.MySensorsManager
 import com.example.sleeptracker.background.receivers.StateReceiver
-import com.example.sleeptracker.database.utils.DBParameters
+import com.example.sleeptracker.utils.DBParameters
+import com.example.sleeptracker.initAws
 import com.example.sleeptracker.models.SleepPeriod
 import com.example.sleeptracker.models.getNonNullUserValue
 import com.example.sleeptracker.objects.TimePeriod
@@ -31,7 +32,11 @@ import com.example.sleeptracker.utils.androidutils.NotificationType
 import com.example.sleeptracker.utils.androidutils.NotificationsManager
 import com.example.sleeptracker.utils.time.DAY_IN_MS
 import com.example.sleeptracker.utils.time.TimeUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.*
+import com.amplifyframework.kotlin.core.Amplify as AmplifyKT
 
 
 private const val NOTIFICATION_ID = 1213
@@ -56,7 +61,7 @@ class TrackerService : Service(){
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-            checkPeriod(intent)
+        checkPeriod(intent)
 
         return START_STICKY
     }
@@ -64,19 +69,21 @@ class TrackerService : Service(){
 
     private fun checkPeriod(intent: Intent?){
         if (!tracking) startForegroundPeriodCheck()
-        var inPeriod = false
-        getSleepPeriodCallBack { periods ->
-            periods.forEach {
-                if (Calendar.getInstance().timeInMillis in it.periodStartMS..it.periodEndMS) {
-                    Log.d("TrackerService", "checkPeriod: Active period:${it.getBasicID()}")
-                    if (!tracking)
-                        startTracking(it)
-                    inPeriod = true
-                    return@forEach
+        initAws(this){
+            var inPeriod = false
+            getSleepPeriodCallBack { periods ->
+                periods.forEach {
+                    if (Calendar.getInstance().timeInMillis in it.periodStartMS..it.periodEndMS) {
+                        Log.d("TrackerService", "checkPeriod: Active period:${it.getBasicID()}")
+                        if (!tracking)
+                            startTracking(it)
+                        inPeriod = true
+                        return@forEach
+                    }
                 }
+                if (!inPeriod)
+                    stopTracking(intent)
             }
-            if (!inPeriod)
-                stopTracking(intent)
         }
     }
 
@@ -105,11 +112,7 @@ class TrackerService : Service(){
 
         val pendingIntent: PendingIntent =
             Intent(this, MainActivity::class.java).let { notificationIntent ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    PendingIntent.getActivity(applicationContext, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
-                } else {
-                    PendingIntent.getActivity(applicationContext, 0, notificationIntent, if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) { PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT } else { PendingIntent.FLAG_UPDATE_CURRENT })
-                }
+                PendingIntent.getActivity(applicationContext, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
             }
         foreGroundNotification = NotificationsManager.createNotification(
             pendingIntent,
@@ -129,7 +132,11 @@ class TrackerService : Service(){
         startForegroundTracking()
         tracking = true
 
-        activeSleepPeriod = SleepPeriod(timePeriod, getState())
+        CoroutineScope(Dispatchers.Main).launch{
+            activeSleepPeriod = SleepPeriod(
+                timePeriod, getState(),AmplifyKT.Auth.getCurrentUser().userId
+            )
+        }
 
         val periodLength = timePeriod.periodEndMS - timePeriod.periodStartMS + 2 * HOUR_IN_MS
         wakeLockPeriod = periodLength
@@ -229,30 +236,33 @@ class TrackerService : Service(){
             unregisterReceiver(stateReceiver)
         }catch (_: Exception){}
 
-        val uid = Amplify.Auth.currentUser?.userId
-        val pid = activeSleepPeriod?.pid
-        if (pid != null && uid != null) {
-            activeSleepPeriod?.saveState("User present")
-        }
-        sensorsManager?.unRegisterSensors(applicationContext)
-        activeSleepPeriod?.calculateSessions{
-            activeSleepPeriod?.calculateSleepDuration(it) {
-                activeSleepPeriod?.calculateAverageMovementCount {
-                    Intent(applicationContext, SurveyService::class.java).also { intent ->
-                        ContextCompat.startForegroundService(applicationContext,intent)
-                        activeSleepPeriod = null
-                        tracking = false
-                        releaseWakeLock()
-                        stopForeground()
-                        stopSelf()
-                    }
+        Amplify.Auth.getCurrentUser({
+            val pid = activeSleepPeriod?.pid
+            val uid = it.userId
+            if (pid != null && uid != null) {
+                activeSleepPeriod?.saveState("User present")
+            }
+            sensorsManager?.unRegisterSensors(applicationContext)
+            activeSleepPeriod?.calculateSessions{
+                activeSleepPeriod?.calculateSleepDuration(it) {
+                    activeSleepPeriod?.calculateAverageMovementCount {
+                        Intent(applicationContext, SurveyService::class.java).also { intent ->
+                            ContextCompat.startForegroundService(applicationContext,intent)
+                            activeSleepPeriod = null
+                            tracking = false
+                            releaseWakeLock()
+                            stopForeground()
+                            stopSelf()
+                        }
 
+                    }
                 }
             }
-        }
+        },{})
+
     }
 
-    fun getSleepPeriodCallBack(callback: (timePeriods: List<TimePeriod>) -> Unit) {
+    private fun getSleepPeriodCallBack(callback: (timePeriods: List<TimePeriod>) -> Unit) {
         getNonNullUserValue {
             val wd = it.workday
             val od = it.offDay

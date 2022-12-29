@@ -19,10 +19,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.example.sleeptracker.R
-import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.background.androidservices.AlarmService
 import com.example.sleeptracker.background.androidservices.SurveyService
-import com.example.sleeptracker.database.utils.DBParameters
+import com.example.sleeptracker.utils.DBParameters
 import com.example.sleeptracker.databinding.ActivityHomeBinding
 import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.models.getNonNullUserValue

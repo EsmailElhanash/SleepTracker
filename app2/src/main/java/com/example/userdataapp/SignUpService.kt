@@ -5,8 +5,6 @@ import android.content.Intent
 import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
-import com.amazonaws.mobile.client.AWSMobileClient
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUserPool
 import com.amplifyframework.AmplifyException
 import com.amplifyframework.api.aws.AWSApiPlugin
 import com.amplifyframework.api.graphql.model.ModelMutation
@@ -46,13 +44,13 @@ class SignUpService : Service() {
             val options2 = AuthSignInOptions.defaults()
             Amplify.Auth.signUp(email, pw, options,
                 let@ {signUpResult->
-                    val id = signUpResult.user?.userId
+                    val id = signUpResult.userId
                     if (id==null){
                         onFailure("Sign up error occurred")
                         return@let
                     }
                     Amplify.Auth.signIn(email,pw,options2, {
-                        if (it.isSignInComplete) {
+                        if (it.isSignedIn) {
                             val u = User2.builder().gender(gender)
                                 .age(age.toInt())
                                 .email(email)
@@ -64,7 +62,9 @@ class SignUpService : Service() {
                             Amplify.API.mutate(
                                 ModelMutation.create(u),
                                 {
-                                    onSuccess(id)
+                                    Amplify.Auth.signOut {
+                                        onSuccess(id)
+                                    }
                                 }, { exc ->
                                     Log.d("SignUpService", "signup exception: $exc")
                                     exc.localizedMessage?.let { it1 -> onFailure(it1) } ?: onFailure("error occurred")
@@ -112,8 +112,6 @@ class SignUpService : Service() {
     }
     private fun configureAws(onSuccess:()-> Unit){
         try{
-
-
             val context = this
             Amplify.addPlugin(AWSApiPlugin())
             Amplify.addPlugin(AWSCognitoAuthPlugin())

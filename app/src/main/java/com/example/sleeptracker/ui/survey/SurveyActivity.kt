@@ -283,7 +283,7 @@ class SurveyActivity : AppCompatActivity() {
     }
 
     private suspend fun saveAnswers() {
-        val uid = AWS.uid()?:return
+        val uid = Amplify.Auth.getCurrentUser().userId
         val message = "Saving answers"
         runOnUiThread {
             Toast.makeText(applicationContext,message,Toast.LENGTH_LONG).show()

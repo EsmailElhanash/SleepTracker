@@ -9,6 +9,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.amplifyframework.auth.options.AuthSignInOptions
 import com.amplifyframework.core.Amplify
 import com.example.sleeptracker.R
 import com.example.sleeptracker.databinding.ActivityLoginBinding
@@ -40,9 +41,9 @@ class LoginActivity : AppCompatActivity() {
                 showProgressIndicator()
                 Amplify.Auth.signIn(
                     binding.emailInputLogin.editText?.text.toString(),
-                    binding.passwordInputLogin.editText?.text.toString(),
+                    binding.passwordInputLogin.editText?.text.toString(), AuthSignInOptions.defaults(),
                     { result ->
-                        if (result.isSignInComplete) {
+                        if (result.isSignedIn) {
                             val intent = Intent(this, HomeActivity::class.java)
                             startActivity(intent)
                             finish()

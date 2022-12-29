@@ -1,18 +1,13 @@
 package com.example.sleeptracker
 
 import android.annotation.SuppressLint
-import android.app.AlarmManager
 import android.app.Application
-import android.app.PendingIntent
 import android.content.Context
-import android.content.ContextParams
 import android.content.Intent
-import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
-import com.amplifyframework.AmplifyException
 import com.amplifyframework.api.aws.AWSApiPlugin
 import com.amplifyframework.auth.cognito.AWSCognitoAuthPlugin
 import com.amplifyframework.core.Amplify
@@ -20,13 +15,11 @@ import com.amplifyframework.core.AmplifyConfiguration
 import com.amplifyframework.datastore.AWSDataStorePlugin
 import com.amplifyframework.datastore.DataStoreConfiguration
 import com.amplifyframework.datastore.DataStoreConflictHandler
-import com.amplifyframework.datastore.appsync.AppSync
 import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.background.androidservices.AlarmService
-import com.example.sleeptracker.background.androidservices.SurveyService
-import com.example.sleeptracker.background.androidservices.TrackerService
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.util.concurrent.TimeUnit
+import com.amplifyframework.kotlin.core.Amplify as AmplifyKT
 
 
 class App : Application() {
@@ -47,7 +40,6 @@ class App : Application() {
     }
     override fun onCreate() {
         INSTANCE = this
-        initAws()
         handleExceptions()
         super.onCreate()
     }
@@ -55,17 +47,21 @@ class App : Application() {
 
     private fun handleExceptions() {
         Thread.setDefaultUncaughtExceptionHandler { _, ex ->
-            if (AWS.uid()!=null)
-                Intent(applicationContext,AlarmService::class.java).also {
-                    ContextCompat.startForegroundService(applicationContext,it)
+            suspend {
+                AmplifyKT.Auth.getCurrentUser().userId.apply {
+                    Intent(applicationContext,AlarmService::class.java).also {
+                        ContextCompat.startForegroundService(applicationContext,it)
+                    }
+                    FirebaseCrashlytics.getInstance().recordException(ex)
                 }
-            FirebaseCrashlytics.getInstance().recordException(ex)
+
+            }
+
         }
     }
 }
 
-private fun initAws (){
-    val context = App.INSTANCE.applicationContext
+fun initAws (context: Context,onComplete:()-> Unit){
     Log.d("APP1 package name = ", App.INSTANCE.packageName)
     Log.d("APP1 package context = ", context.toString())
     try{
@@ -95,8 +91,10 @@ private fun initAws (){
             AmplifyConfiguration.fromConfigFile(context,R.raw.amplifyconfiguration),context
         )
         AWS.hub()
-
+        onComplete()
     }catch (e: Exception){
+        if (e is Amplify.AlreadyConfiguredException)
+            onComplete()
         Log.d("amplify conf exception", "exception: $e")
 
     }

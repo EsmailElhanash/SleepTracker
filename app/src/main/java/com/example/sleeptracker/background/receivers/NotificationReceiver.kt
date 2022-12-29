@@ -52,7 +52,6 @@ class NotificationReceiver : BroadcastReceiver() {
 
         } else if (action == "yes") {
             showSurveyConditionTwoNotification(context.applicationContext)
-            val uid = Amplify.Auth.currentUser?.userId ?: return
             saveLastCondition2("yes")
         }
     }

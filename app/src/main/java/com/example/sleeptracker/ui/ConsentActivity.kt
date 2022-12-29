@@ -14,8 +14,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.sleeptracker.R
 import com.example.sleeptracker.aws.AWS
-import com.example.sleeptracker.database.utils.DBParameters.CONSENT_ACCEPTED
-import com.example.sleeptracker.database.utils.DBParameters.CONSENT_DECLINED
+import com.example.sleeptracker.utils.DBParameters.CONSENT_ACCEPTED
+import com.example.sleeptracker.utils.DBParameters.CONSENT_DECLINED
 import com.example.sleeptracker.databinding.ActivityConsentBinding
 import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.models.getNonNullUserValue
@@ -167,7 +167,7 @@ class ConsentActivity : AppCompatActivity() {
             .setOnCancelListener {
                 finishAffinity()
             }
-            .setPositiveButton(R.string.ok){ _, _->
+            .setPositiveButton(android.R.string.ok){ _, _->
                 finishAffinity()
             }
             .setCancelable(false)
@@ -184,7 +184,7 @@ class ConsentActivity : AppCompatActivity() {
             .setOnCancelListener {
 
             }
-            .setPositiveButton(R.string.ok){ _, _->
+            .setPositiveButton(android.R.string.ok){ _, _->
                 val i = Intent(this, SurveyActivity::class.java)
                 i.putExtra(SurveyActivity.SURVEY_CASE_EXTRA,SurveyActivity.SURVEY_CASE_1)
                 startActivity(i)

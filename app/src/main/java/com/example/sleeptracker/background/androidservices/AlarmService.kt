@@ -13,7 +13,8 @@ import androidx.core.content.ContextCompat
 import com.amplifyframework.datastore.generated.model.DayGroup
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.receivers.AlarmReceiver
-import com.example.sleeptracker.database.utils.DBParameters.DAYS
+import com.example.sleeptracker.utils.DBParameters.DAYS
+import com.example.sleeptracker.initAws
 import com.example.sleeptracker.models.getNonNullUserValue
 import com.example.sleeptracker.objects.TimePoint
 import com.example.sleeptracker.ui.MainActivity
@@ -29,15 +30,15 @@ class AlarmService : Service() {
     private var isForeground: Boolean = false
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         goForeGround()
-            getNonNullUserValue{
+        initAws(this){
+            getNonNullUserValue {
                 if (!isForeground) setAlarm(it.workday, it.offDay)
                 else {
                     stopForeground()
                     setAlarm(it.workday, it.offDay)
                 }
             }
-
-
+        }
         return START_NOT_STICKY
     }
 

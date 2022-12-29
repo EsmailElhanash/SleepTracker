@@ -15,7 +15,7 @@ import com.example.sleeptracker.utils.time.TimeUtil
 import java.util.*
 
 
-class SleepPeriod(val timePeriod: TimePeriod, initState : String) {
+class SleepPeriod(val timePeriod: TimePeriod, initState : String, val uid:String) {
     companion object{
         private const val saveEvery = 30000L
         private const val delayBWModels = 2000L
@@ -25,7 +25,7 @@ class SleepPeriod(val timePeriod: TimePeriod, initState : String) {
 
     private val TAG = "SleepPeriod ${timePeriod.getPeriodID()}"
 
-    val pid = "${timePeriod.getPeriodID()}- UserID:${AWS.uid()}"
+    val pid = "${timePeriod.getPeriodID()}- UserID:${uid}"
 
     private var newData = false
         set(value) {
@@ -87,7 +87,7 @@ class SleepPeriod(val timePeriod: TimePeriod, initState : String) {
                         .wakeUpTime(timePeriod.getEndTime())
                         .sleepTime(timePeriod.getStartTime())
                         .createdAt(Temporal.DateTime(createdAt, 0))
-                        .userId(AWS.uid())
+                        .userId(uid)
                         .id(pid)
                         .accelerometerLastReading(accelerometerLastReading)
                         .totalMovements(totalMovementCount)
@@ -146,7 +146,7 @@ class SleepPeriod(val timePeriod: TimePeriod, initState : String) {
                     .wakeUpTime(timePeriod.getEndTime())
                     .sleepTime(timePeriod.getStartTime())
                     .createdAt(Temporal.DateTime(createdAt,0))
-                    .userId(AWS.uid())
+                    .userId(uid)
                     .id(pid)
                     .accelerometerLastReading(accelerometerLastReading)
                     .actualSleepTime(actualSleepTime)

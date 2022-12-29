@@ -111,8 +111,8 @@ class SignUpActivity : AppCompatActivity()
         binding.ethnicGroups.ethnicRadioGroup.check(R.id.asian_ethnic)
         binding.nameInput.editText?.setText("eeee0000")
         binding.ageInput.editText?.setText("22")
-//        binding.emailInput.editText?.setText("esmailelhanash${MainActivity.c}@gmail.com")
-        binding.emailInput.editText?.setText("esmailelhanash${Calendar.getInstance().timeInMillis/60000}@gmail.com")
+        binding.emailInput.editText?.setText("esmailelhanash${MainActivity.c}@gmail.com")
+//        binding.emailInput.editText?.setText("esmailelhanash${Calendar.getInstance().timeInMillis/60000}@gmail.com")
         binding.genderPicker.setSelection(1)
         binding.passwordInput.editText?.setText("eeee1111")
         binding.passwordConfirmInput.editText?.setText("eeee1111")
@@ -168,18 +168,17 @@ class SignUpActivity : AppCompatActivity()
             .build()
         Amplify.Auth.signUp(email, pw, options,
             lit@{ it1 ->
-                val id = it1.user?.userId
+                val id = it1.userId
                 if (id==null){
                     onFailure(it1.toString())
                     return@lit
                 }
-                onSidReady(id)
 
                 Amplify.Auth.signIn(email,pw, AuthSignInOptions.defaults(), {
-                    if (it.isSignInComplete) {
+                    if (it.isSignedIn) {
                         id1 = id
-                        createUser()
                     }
+                    onSidReady(id)
                 },
                     {
                         it.message?.let { it2 -> onFailure(it2) }
@@ -232,14 +231,12 @@ class SignUpActivity : AppCompatActivity()
                 .id(id1)
                 .build()
 
-            AWS.save(u){
-                if (it.success){
-                    runOnUiThread {
-                        val consentIntent = Intent(this,ConsentActivity::class.java)
-                        startActivity(consentIntent)
-                    }
-                }else if (it.error!= null){
-                    onFailure(it.error)
+
+
+            AWS.save(u) {
+                runOnUiThread {
+                    val consentIntent = Intent(this, ConsentActivity::class.java)
+                    startActivity(consentIntent)
                 }
             }
         }

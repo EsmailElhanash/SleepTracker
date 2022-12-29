@@ -36,16 +36,16 @@ class MySensorsManager(private val sleepPeriod: SleepPeriod) : SensorEventListen
 
             if (magnitudeDelta > 1.0) {
                 currentAccelerometerReading = magnitudeDelta
-                val uid = Amplify.Auth.currentUser?.userId
-                if (uid != null) {
+                Amplify.Auth.getCurrentUser({
                     sleepPeriod.saveAccelerometerReading(
                         currentAccelerometerReading
                     )
                     sleepPeriod.saveStepTime()
-                }
-                CoroutineScope(Dispatchers.Main).launch {
-                    pauseAccelerometerSensor()
-                }
+                    CoroutineScope(Dispatchers.Main).launch {
+                        pauseAccelerometerSensor()
+                    }
+                },{})
+
             }
         }
     }

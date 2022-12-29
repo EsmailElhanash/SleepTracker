@@ -9,8 +9,6 @@ import com.amplifyframework.core.model.query.QuerySortOrder
 import com.amplifyframework.core.model.query.Where
 import com.amplifyframework.core.model.query.predicate.QueryPredicate
 import com.amplifyframework.datastore.DataStoreChannelEventName
-import com.amplifyframework.datastore.appsync.ModelWithMetadata
-import com.amplifyframework.datastore.generated.model.User
 import com.amplifyframework.hub.HubChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,8 +47,15 @@ object AWS {
 
     }
 
-    fun uid () =
-        Amplify.Auth?.currentUser?.userId
+    fun uid (onComplete: (id: String?) -> Unit) =
+        Amplify.Auth?.getCurrentUser(
+            {
+                onComplete(it.userId)
+            },
+            {
+                Log.d(TAG, "exc: $it")
+                onComplete(null)
+            })
 
 
     fun amplifyRetry(){

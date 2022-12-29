@@ -15,7 +15,7 @@ import com.amplifyframework.core.Amplify
 import com.amplifyframework.datastore.generated.model.DayGroup
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.androidservices.AlarmService
-import com.example.sleeptracker.database.utils.DBParameters
+import com.example.sleeptracker.utils.DBParameters
 import com.example.sleeptracker.databinding.ActivitySettingsBinding
 import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.models.getNonNullUserValue
@@ -306,16 +306,11 @@ class SettingsActivity : AppCompatActivity() , TimePickerListener {
         val myDialog = AlertDialog.Builder(context)
             .setMessage("Are you sure?")
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                Amplify.Auth.signOut(
-                    {
-                        val intent = Intent(context.applicationContext, LoginActivity::class.java)
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        context.startActivity(intent)
-                    },
-                    {
-                        it.localizedMessage?.let { it1 -> onFailure(it1) }
-                    }
-                )
+                Amplify.Auth.signOut {
+                    val intent = Intent(context.applicationContext, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    context.startActivity(intent)
+                }
             }
             .setNegativeButton(android.R.string.cancel) { dialog, _ -> dialog.dismiss() }
             .create()
