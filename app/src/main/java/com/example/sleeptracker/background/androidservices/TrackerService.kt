@@ -12,14 +12,11 @@ import android.content.IntentFilter
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
-import android.os.WorkSource
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.amplifyframework.core.Amplify
-import com.example.sleeptracker.App
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.MySensorsManager
-import com.example.sleeptracker.background.receivers.AlarmReceiver
 import com.example.sleeptracker.background.receivers.StateReceiver
 import com.example.sleeptracker.initAws
 import com.example.sleeptracker.models.SleepPeriod
@@ -31,7 +28,6 @@ import com.example.sleeptracker.utils.MINUTE_IN_MS
 import com.example.sleeptracker.utils.androidutils.NotificationType
 import com.example.sleeptracker.utils.androidutils.NotificationsManager
 import java.util.*
-import kotlin.math.log
 
 
 private const val NOTIFICATION_ID = 1213
@@ -57,7 +53,7 @@ class TrackerService : Service(){
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        initAws(this){
+        initAws(applicationContext as AlarmService){
             user = UserModel()
             checkPeriod(intent)
         }

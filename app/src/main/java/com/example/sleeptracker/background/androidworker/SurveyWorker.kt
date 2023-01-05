@@ -1,19 +1,26 @@
-package com.example.sleeptracker.background.androidservices
+package com.example.sleeptracker.background.androidworker
 
 import android.annotation.SuppressLint
 import android.app.AlarmManager
+import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import androidx.core.content.ContextCompat.getSystemService
+import androidx.work.ForegroundInfo
+import androidx.work.Worker
+import androidx.work.WorkerParameters
 import com.amplifyframework.core.model.Model
 import com.amplifyframework.core.model.query.Where
 import com.amplifyframework.core.model.query.predicate.QueryPredicate
 import com.amplifyframework.datastore.generated.model.TrackerPeriod
 import com.example.sleeptracker.R
 import com.example.sleeptracker.aws.AWS
+import com.example.sleeptracker.background.androidservices.AlarmService
+import com.example.sleeptracker.background.androidservices.SURVEY_ALARM_ID
 import com.example.sleeptracker.background.receivers.SurveyAlarmReceiver
 import com.example.sleeptracker.initAws
 import com.example.sleeptracker.models.UserModel
@@ -30,16 +37,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.*
 
-const val SURVEY_ALARM_ID = 12321
-
-class SurveyService : Service() {
-
+class SurveyWorker(context: Context, workerParams: WorkerParameters) :
+    Worker(context, workerParams) {
     private var isForeground: Boolean = false
     private lateinit var user : UserModel
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun doWork(): Result {
         initAws(applicationContext as AlarmService){
             user = UserModel()
-            goForeGround()
+            setForegroundAsync(createForeGroundInfo())
             scheduleSurveyCheck()
             CoroutineScope(Dispatchers.IO).launch {
                 checkSurveyConditionOne {
@@ -55,11 +60,12 @@ class SurveyService : Service() {
             }
         }
 
-        return START_NOT_STICKY
+        return  Result.success()
     }
+
     private fun checkSurveyConditionOne(onComplete: ((retake: Int) -> Unit)){
         val nowMS = Calendar.getInstance().timeInMillis
-        val pref = applicationContext.getSharedPreferences(PREFERENCES_NAME, MODE_PRIVATE)
+        val pref = applicationContext.getSharedPreferences(PREFERENCES_NAME, Service.MODE_PRIVATE)
         val lastNotification = pref.getLong(LAST_SURVEY_NOTIFICATION, 0)
         if (nowMS<=lastNotification + DAY_IN_MS){
             user.getSurveyRetakePeriod {
@@ -87,8 +93,8 @@ class SurveyService : Service() {
         var s1 : Long? = null
         var s2 : Long? = null
 
-        val sortedMovementCount :SortedMap<Long,Int> = sortedMapOf()
-        val sortedDisturbancesCount :SortedMap<Long,Int> = sortedMapOf()
+        val sortedMovementCount : SortedMap<Long, Int> = sortedMapOf()
+        val sortedDisturbancesCount : SortedMap<Long, Int> = sortedMapOf()
 
 
         val checkCondition = {
@@ -101,10 +107,10 @@ class SurveyService : Service() {
                 if (lastIndex >= 4) {
                     shouldShowConditionTwoNotification =
                         movementCountList[lastIndex    ] >=3 &&
-                        movementCountList[lastIndex - 1] >=3 &&
-                        movementCountList[lastIndex - 2] >=3 &&
-                        movementCountList[lastIndex - 3] >=3 &&
-                        movementCountList[lastIndex - 4] >=3
+                                movementCountList[lastIndex - 1] >=3 &&
+                                movementCountList[lastIndex - 2] >=3 &&
+                                movementCountList[lastIndex - 3] >=3 &&
+                                movementCountList[lastIndex - 4] >=3
                 }
             }
 
@@ -113,16 +119,16 @@ class SurveyService : Service() {
                 val lastIndex = disturbancesCountList.size - 1
                 if (lastIndex >= 4) { // todo CRITICAL CHANGE BACK TO 4 NOT 0
                     val last5Count =
-                            disturbancesCountList[lastIndex    ] +
-                            disturbancesCountList[lastIndex - 1] +
-                            disturbancesCountList[lastIndex - 2] +
-                            disturbancesCountList[lastIndex - 3] +
-                            disturbancesCountList[lastIndex - 4]
+                        disturbancesCountList[lastIndex    ] +
+                                disturbancesCountList[lastIndex - 1] +
+                                disturbancesCountList[lastIndex - 2] +
+                                disturbancesCountList[lastIndex - 3] +
+                                disturbancesCountList[lastIndex - 4]
                     if (last5Count >= 3) shouldShowConditionTwoNotification = true
                 }
             }
             if (shouldShowConditionTwoNotification) {// todo CRITICAL CHANGE BACK TO shouldShowConditionTwoNotification NOT !shouldShowConditionTwoNotification
-                NotificationsManager.showSurveyConditionTwoNotification(this)
+                NotificationsManager.showSurveyConditionTwoNotification(applicationContext)
                 onComplete()
             }else {
                 onComplete()
@@ -148,11 +154,11 @@ class SurveyService : Service() {
                     }
 
                     checkCondition()
-            }
+                }
             } else {
                 onComplete()
             }
-         }
+        }
 
         user.getSurveyLastUpdatedCaseOne{
             s1 = it
@@ -191,7 +197,7 @@ class SurveyService : Service() {
 
     @SuppressLint("UnspecifiedImmutableFlag")
     private fun scheduleSurveyCheck(){
-        val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val alarmManager = applicationContext.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
 
         val calendar = Calendar.getInstance()
         calendar.set(Calendar.HOUR_OF_DAY,12)
@@ -224,31 +230,22 @@ class SurveyService : Service() {
     }
 
     private fun stopForeground(){
-        stopForeground(true)
         isForeground = false
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
 
-    private fun goForeGround(){
+    private fun createForeGroundInfo(): ForegroundInfo {
         val pendingIntent: PendingIntent =
-            Intent(this, MainActivity::class.java)
+            Intent(applicationContext, MainActivity::class.java)
                 .let { notificationIntent ->
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        PendingIntent.getActivity(this, 0, notificationIntent,
-                            PendingIntent.FLAG_IMMUTABLE
-                        )
-                    } else {
-                        PendingIntent.getActivity(this, 0, notificationIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT
-                        )
-                    }
+                    PendingIntent.getActivity(
+                        applicationContext, 0, notificationIntent,
+                        PendingIntent.FLAG_IMMUTABLE
+                    )
                 }
-        startForeground(131,NotificationsManager.createNotification(
-            pendingIntent,applicationContext,getText(R.string.checking_survey), NotificationType.UPDATING_DATA
-        )?.build())
+        val notification: Notification? = NotificationsManager.createNotification(
+            pendingIntent, applicationContext, "Updating data", NotificationType.UPDATING_DATA
+        )?.build()
         isForeground = true
-    }
-}
+        return ForegroundInfo(1, notification!!)
+    }}

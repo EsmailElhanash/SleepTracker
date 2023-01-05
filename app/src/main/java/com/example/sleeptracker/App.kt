@@ -1,12 +1,9 @@
 package com.example.sleeptracker
 
 import android.annotation.SuppressLint
-import android.app.AlarmManager
 import android.app.Application
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -19,11 +16,8 @@ import com.amplifyframework.core.AmplifyConfiguration
 import com.amplifyframework.datastore.AWSDataStorePlugin
 import com.amplifyframework.datastore.DataStoreConfiguration
 import com.amplifyframework.datastore.DataStoreConflictHandler
-import com.amplifyframework.datastore.appsync.AppSync
 import com.example.sleeptracker.aws.AWS
 import com.example.sleeptracker.background.androidservices.AlarmService
-import com.example.sleeptracker.background.androidservices.SurveyService
-import com.example.sleeptracker.background.androidservices.TrackerService
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.util.concurrent.TimeUnit
 
@@ -59,7 +53,7 @@ class App : Application() {
     }
 }
 
-fun initAws (context:Context , onSuccess : ()->Unit){
+fun initAws (context: AlarmService, onSuccess: ()->Unit){
     try{
         val datastorePlugin = AWSDataStorePlugin.builder().run {
 

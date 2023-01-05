@@ -18,12 +18,17 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
 import com.amplifyframework.core.Amplify
 import com.amplifyframework.core.Amplify.DataStore
 import com.example.sleeptracker.App
 import com.example.sleeptracker.R
 import com.example.sleeptracker.background.androidservices.AlarmService
 import com.example.sleeptracker.background.androidservices.SurveyService
+import com.example.sleeptracker.background.androidworker.AlarmWorker
+import com.example.sleeptracker.background.androidworker.SurveyWorker
 import com.example.sleeptracker.database.utils.DBParameters
 import com.example.sleeptracker.databinding.ActivityHomeBinding
 import com.example.sleeptracker.models.UserModel
@@ -39,6 +44,10 @@ class HomeActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHomeBinding
     private lateinit var root : View
+    private lateinit var workManager: WorkManager
+    private lateinit var workRequestAlarmWorker: WorkRequest
+    private lateinit var workRequestSurveyWorker: WorkRequest
+
     val user : UserModel by viewModels()
 
 
@@ -48,14 +57,19 @@ class HomeActivity : AppCompatActivity() {
         root = binding.root
         setContentView(root)
         setSupportActionBar(binding.toolBarHomeActivity)
+        workManager=WorkManager.getInstance(applicationContext)
+        workRequestAlarmWorker=OneTimeWorkRequest.Builder(AlarmWorker::class.java).build()
+        workRequestSurveyWorker=OneTimeWorkRequest.Builder(SurveyWorker::class.java).build()
 
 
-
-        Intent(applicationContext, AlarmService::class.java).also {
-            ContextCompat.startForegroundService(applicationContext,it)
+        Intent(applicationContext, AlarmWorker::class.java).also {
+           // ContextCompat.startForegroundService(applicationContext,it)
+            workManager.enqueue(workRequestAlarmWorker) //replace with work manger to fix crash with android 12 and more
         }
-        Intent(applicationContext, SurveyService::class.java).also {
+        Intent(applicationContext, SurveyWorker::class.java).also {
             ContextCompat.startForegroundService(applicationContext,it)
+            workManager.enqueue(workRequestSurveyWorker) //replace with work manger to fix crash with android 12 and more
+
         }
 
 

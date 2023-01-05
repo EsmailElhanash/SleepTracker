@@ -1,19 +1,21 @@
-package com.example.sleeptracker.background.androidservices
+package com.example.sleeptracker.background.androidworker
 
 import android.annotation.SuppressLint
 import android.app.AlarmManager
+import android.app.Notification
 import android.app.PendingIntent
-import android.app.PendingIntent.FLAG_IMMUTABLE
-import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.os.IBinder
 import android.util.Log
 import androidx.core.content.ContextCompat
-import com.example.sleeptracker.R
+import androidx.work.ForegroundInfo
+import androidx.work.Worker
+import androidx.work.WorkerParameters
+import com.example.sleeptracker.background.androidservices.AlarmService
+import com.example.sleeptracker.background.androidservices.TrackerService
 import com.example.sleeptracker.background.receivers.AlarmReceiver
-import com.example.sleeptracker.database.utils.DBParameters.DAYS
+import com.example.sleeptracker.database.utils.DBParameters
 import com.example.sleeptracker.initAws
 import com.example.sleeptracker.models.UserModel
 import com.example.sleeptracker.objects.DaysGroup
@@ -31,29 +33,29 @@ import kotlinx.coroutines.launch
 import java.util.*
 
 
-class AlarmService : Service() {
+class AlarmWorker(context: Context, workerParams: WorkerParameters) :
+    Worker(context, workerParams) {
     private var isForeground: Boolean = false
     private lateinit var user: UserModel
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        initAws(this) {
+    override fun doWork(): Result {
+        initAws(applicationContext as AlarmService) {
             user = UserModel()
             if (!isForeground) prepareAlarmStartTime()
             else {
-                stopForeground()
                 prepareAlarmStartTime()
             }
         }
-        return START_NOT_STICKY
+        return Result.success()
     }
 
     private fun prepareAlarmStartTime() {
-        goForeGround()
-        var workDaysGroup : DaysGroup? = null
-        var offDaysGroup : DaysGroup? = null
-        user.workDays.observeForever{
+        setForegroundAsync(createForeGroundInfo())
+        var workDaysGroup: DaysGroup? = null
+        var offDaysGroup: DaysGroup? = null
+        user.workDays.observeForever {
             if (it != null) {
                 workDaysGroup = it
-                if (workDaysGroup!=null && offDaysGroup!=null)
+                if (workDaysGroup != null && offDaysGroup != null)
                     setAlarm(workDaysGroup!!, offDaysGroup!!)
 
             }
@@ -61,25 +63,26 @@ class AlarmService : Service() {
         user.offDays.observeForever {
             if (it != null) {
                 offDaysGroup = it
-                if (workDaysGroup!=null && offDaysGroup!=null)
+                if (workDaysGroup != null && offDaysGroup != null)
                     setAlarm(workDaysGroup!!, offDaysGroup!!)
             }
         }
-        CoroutineScope(Dispatchers.IO).launch{
+        CoroutineScope(Dispatchers.IO).launch {
             delay(60000)
-            if (isForeground) stopForeground()
+            //  if (isForeground) stopForeground()
         }
     }
 
     @SuppressLint("UnspecifiedImmutableFlag")
-    private fun setAlarm(workDaysGroup: DaysGroup,offDaysGroup: DaysGroup){
-        val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+    private fun setAlarm(workDaysGroup: DaysGroup, offDaysGroup: DaysGroup) {
+        val alarmManager =
+            applicationContext.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         if (alarmManager != null) {
             //Day of week , Saturday = 0 ... Friday = 6
             val nowDayOfWeek = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) % 7
-            DAYS.forEachIndexed { dayNum, dayName ->
-                val sleepTimePoint : TimePoint
-                val awakeTimePoint : TimePoint
+            DBParameters.DAYS.forEachIndexed { dayNum, dayName ->
+                val sleepTimePoint: TimePoint
+                val awakeTimePoint: TimePoint
                 when (dayName) {
                     in workDaysGroup.daysNames -> {
                         sleepTimePoint = workDaysGroup.sleepTime
@@ -92,20 +95,28 @@ class AlarmService : Service() {
                     else -> return
                 }
                 val sleepAndAwake = TimeUtil
-                    .getStartEndPair(sleepTimePoint,awakeTimePoint, Calendar.getInstance().timeInMillis)
+                    .getStartEndPair(
+                        sleepTimePoint,
+                        awakeTimePoint,
+                        Calendar.getInstance().timeInMillis
+                    )
 
                 val nxtSleepTime = sleepAndAwake.first + MINUTE_IN_MS
                 val dayDiff = (7 - (nowDayOfWeek - dayNum)) % 7
                 val startTimeMS = (nxtSleepTime + dayDiff * DAY_IN_MS)
                 val pIntent = Intent(applicationContext, AlarmReceiver::class.java).let { intent ->
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        PendingIntent.getBroadcast(applicationContext,
+                        PendingIntent.getBroadcast(
+                            applicationContext,
                             dayNum,
-                            intent,FLAG_IMMUTABLE)
+                            intent, PendingIntent.FLAG_IMMUTABLE
+                        )
                     } else {
-                        PendingIntent.getBroadcast(applicationContext,
+                        PendingIntent.getBroadcast(
+                            applicationContext,
                             dayNum,
-                            intent,PendingIntent.FLAG_UPDATE_CURRENT)
+                            intent, PendingIntent.FLAG_UPDATE_CURRENT
+                        )
                     }
                 }
                 Log.d("setAlarm ", ": ${Date(startTimeMS)}")
@@ -124,38 +135,26 @@ class AlarmService : Service() {
                 }
             }
         }
-        ContextCompat.startForegroundService(applicationContext,
+        ContextCompat.startForegroundService(
+            applicationContext,
             Intent(applicationContext, TrackerService::class.java)
         )
-        stopForeground()
+        //   stopForeground()
     }
 
-
-
-
-
-
-    private fun stopForeground(){
-        stopForeground(true)
-        isForeground = false
-    }
-
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
-
-
-    private fun goForeGround(){
+    private fun createForeGroundInfo(): ForegroundInfo {
         val pendingIntent: PendingIntent =
-            Intent(this, MainActivity::class.java)
+            Intent(applicationContext, MainActivity::class.java)
                 .let { notificationIntent ->
-                    PendingIntent.getActivity(this, 0, notificationIntent, FLAG_IMMUTABLE)
+                    PendingIntent.getActivity(
+                        applicationContext, 0, notificationIntent,
+                        PendingIntent.FLAG_IMMUTABLE
+                    )
                 }
-        startForeground(11114, NotificationsManager.createNotification(
-            pendingIntent,applicationContext,getText(R.string.updating_data),NotificationType.UPDATING_DATA
+        val notification: Notification? = NotificationsManager.createNotification(
+            pendingIntent, applicationContext, "Updating data", NotificationType.UPDATING_DATA
         )?.build()
-        )
         isForeground = true
+        return ForegroundInfo(1, notification!!)
     }
-
 }

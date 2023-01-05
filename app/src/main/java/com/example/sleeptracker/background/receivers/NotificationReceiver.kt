@@ -11,6 +11,7 @@ import com.amplifyframework.core.model.temporal.Temporal
 import com.amplifyframework.datastore.generated.model.SurveyUpdateLastCase2
 import com.amplifyframework.datastore.generated.model.User
 import com.example.sleeptracker.aws.AWS
+import com.example.sleeptracker.background.androidservices.AlarmService
 import com.example.sleeptracker.initAws
 import com.example.sleeptracker.ui.survey.SurveyActivity
 import com.example.sleeptracker.utils.androidutils.NotificationType
@@ -25,7 +26,7 @@ class NotificationReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context?, intent: Intent?) {
         context ?: return
-        initAws(context) {
+        initAws(context as AlarmService) {
             val id = 13132
             val action = intent?.action
             if (action == "no") {
