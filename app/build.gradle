@@ -10,12 +10,26 @@ android {
     compileSdk 33
     buildToolsVersion "33.0.1"
 
+    def keystorePath = System.getenv("SLEEPTRACKER_RELEASE_STORE_FILE") ?: project.findProperty("sleeptracker.releaseStoreFile")
+    def keystorePassword = System.getenv("SLEEPTRACKER_RELEASE_STORE_PASSWORD") ?: project.findProperty("sleeptracker.releaseStorePassword")
+    def keyAliasProp = System.getenv("SLEEPTRACKER_RELEASE_KEY_ALIAS") ?: project.findProperty("sleeptracker.releaseKeyAlias")
+    def keyPasswordProp = System.getenv("SLEEPTRACKER_RELEASE_KEY_PASSWORD") ?: project.findProperty("sleeptracker.releaseKeyPassword")
+    def hasReleaseSigning = [keystorePath, keystorePassword, keyAliasProp, keyPasswordProp].every { it }
+
     signingConfigs {
         release {
-            storeFile file('/home/esmail/AndroidProjects/SleepTracker/release-ks.jks')
-            keyAlias 'key0'
-            storePassword 'REDACTED_PASSWORD'
-            keyPassword 'REDACTED_PASSWORD'
+            if (keystorePath) {
+                storeFile file(keystorePath)
+            }
+            if (keyAliasProp) {
+                keyAlias keyAliasProp
+            }
+            if (keystorePassword) {
+                storePassword keystorePassword
+            }
+            if (keyPasswordProp) {
+                keyPassword keyPasswordProp
+            }
         }
     }
 
@@ -32,7 +46,9 @@ android {
         multiDexEnabled true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        signingConfig signingConfigs.release
+        if (hasReleaseSigning) {
+            signingConfig signingConfigs.release
+        }
     }
 
     buildTypes {
