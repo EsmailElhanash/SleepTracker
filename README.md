@@ -3,7 +3,7 @@
 Android sleep tracking app built with Kotlin. The repo includes two app modules: `app` and `app2`.
 
 ## Screenshot
-![SleepTracker project preview](docs/screenshots/sleep-tracker.png)
+![SleepTracker project preview](docs/screenshots/ST.png)
 
 ## Requirements
 - Android Studio
